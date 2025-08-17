@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, Clock, User, CheckCircle, XCircle, LogOut } from "lucide-react";
+import { Calendar, Clock, User, CheckCircle, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import Layout from "@/components/Layout";
 
 interface ODRequest {
   id: string;
@@ -64,6 +66,19 @@ const HODDashboard = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Redirect if not authenticated or not HOD
+  useEffect(() => {
+    if (!user) {
+      navigate('/');
+      return;
+    }
+    if (user.role !== 'hod') {
+      navigate('/');
+      return;
+    }
+  }, [user, navigate]);
 
   const handleRequestAction = (requestId: string, action: "approved" | "rejected") => {
     setRequests(prev => prev.map(req => 
@@ -88,48 +103,35 @@ const HODDashboard = () => {
 
   const pendingRequests = requests.filter(r => r.status === "pending");
 
-  return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-card border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">HOD Dashboard</h1>
-              <p className="text-muted-foreground">Review and manage OD requests</p>
-            </div>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate("/")}
-              className="flex items-center gap-2"
-            >
-              <LogOut className="w-4 h-4" />
-              Logout
-            </Button>
-          </div>
-        </div>
-      </header>
+  if (!user) {
+    return null; // Will redirect
+  }
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
+  return (
+    <Layout title="HOD Dashboard">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
             <h2 className="text-xl font-semibold text-foreground">
               Pending Approvals ({pendingRequests.length})
             </h2>
-            <div className="flex gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-warning"></div>
-                <span>Pending</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-success"></div>
-                <span>Approved</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-destructive"></div>
-                <span>Rejected</span>
-              </div>
+            <p className="text-muted-foreground">Welcome back, {user.name}!</p>
+          </div>
+          <div className="flex gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-warning"></div>
+              <span>Pending</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-success"></div>
+              <span>Approved</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-destructive"></div>
+              <span>Rejected</span>
             </div>
           </div>
+        </div>
 
           {pendingRequests.length === 0 ? (
             <Card>
@@ -191,7 +193,6 @@ const HODDashboard = () => {
             </div>
           )}
         </div>
-      </main>
 
       {/* Request Detail Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -255,7 +256,7 @@ const HODDashboard = () => {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </Layout>
   );
 };
 

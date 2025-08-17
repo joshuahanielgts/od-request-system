@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Clock, BookOpen, LogOut } from "lucide-react";
+import { Users, Clock, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import Layout from "@/components/Layout";
 
 interface Student {
   id: string;
@@ -23,6 +25,19 @@ interface ClassData {
 const FacultyDashboard = () => {
   const [selectedClass, setSelectedClass] = useState<string>("");
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Redirect if not authenticated or not faculty
+  useEffect(() => {
+    if (!user) {
+      navigate('/');
+      return;
+    }
+    if (user.role !== 'faculty') {
+      navigate('/');
+      return;
+    }
+  }, [user, navigate]);
 
   const classesData: ClassData[] = [
     {
@@ -145,29 +160,14 @@ const FacultyDashboard = () => {
   const selectedClassData = classesData.find(c => c.className === selectedClass);
   const totalODStudents = classesData.reduce((sum, cls) => sum + cls.students.length, 0);
 
-  return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-card border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Faculty Dashboard</h1>
-              <p className="text-muted-foreground">View class-wise OD information</p>
-            </div>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate("/")}
-              className="flex items-center gap-2"
-            >
-              <LogOut className="w-4 h-4" />
-              Logout
-            </Button>
-          </div>
-        </div>
-      </header>
+  if (!user) {
+    return null; // Will redirect
+  }
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-6">
+  return (
+    <Layout title="Faculty Dashboard">
+      <div className="mb-6 text-muted-foreground">Welcome back, {user.name}!</div>
+      <div className="space-y-6">
           {/* Overview Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card>
@@ -349,8 +349,7 @@ const FacultyDashboard = () => {
             </Card>
           )}
         </div>
-      </main>
-    </div>
+    </Layout>
   );
 };
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,9 +6,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Clock, FileText, Plus, LogOut } from "lucide-react";
+import { Calendar, Clock, FileText, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import Layout from "@/components/Layout";
 
 interface ODRequest {
   id: string;
@@ -56,6 +58,19 @@ const StudentDashboard = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Redirect if not authenticated or not a student
+  useEffect(() => {
+    if (!user) {
+      navigate('/');
+      return;
+    }
+    if (user.role !== 'student') {
+      navigate('/');
+      return;
+    }
+  }, [user, navigate]);
 
   const handleSubmitRequest = (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,99 +125,85 @@ const StudentDashboard = () => {
 
   const { pending, approved, rejected } = categorizeRequests();
 
-  return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-card border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Student Dashboard</h1>
-              <p className="text-muted-foreground">Manage your On Duty requests</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="flex items-center gap-2">
-                    <Plus className="w-4 h-4" />
-                    Request OD
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Submit OD Request</DialogTitle>
-                    <DialogDescription>
-                      Fill in the details for your On Duty request
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form onSubmit={handleSubmitRequest} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="eventName">Event Name *</Label>
-                      <Input
-                        id="eventName"
-                        placeholder="Enter event name"
-                        value={newRequest.eventName}
-                        onChange={(e) => setNewRequest(prev => ({ ...prev, eventName: e.target.value }))}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="date">Date *</Label>
-                      <Input
-                        id="date"
-                        type="date"
-                        value={newRequest.date}
-                        onChange={(e) => setNewRequest(prev => ({ ...prev, date: e.target.value }))}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="startTime">Start Time *</Label>
-                        <Input
-                          id="startTime"
-                          type="time"
-                          value={newRequest.startTime}
-                          onChange={(e) => setNewRequest(prev => ({ ...prev, startTime: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="endTime">End Time *</Label>
-                        <Input
-                          id="endTime"
-                          type="time"
-                          value={newRequest.endTime}
-                          onChange={(e) => setNewRequest(prev => ({ ...prev, endTime: e.target.value }))}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="reason">Reason for OD *</Label>
-                      <Textarea
-                        id="reason"
-                        placeholder="Explain the reason for your OD request"
-                        value={newRequest.reason}
-                        onChange={(e) => setNewRequest(prev => ({ ...prev, reason: e.target.value }))}
-                      />
-                    </div>
-                    <Button type="submit" className="w-full">
-                      Submit Request
-                    </Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
-              <Button 
-                variant="outline" 
-                onClick={() => navigate("/")}
-                className="flex items-center gap-2"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+  if (!user) {
+    return null; // Will redirect
+  }
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  return (
+    <Layout title="Student Dashboard">
+      <div className="flex justify-between items-center mb-6">
+        <div className="text-muted-foreground">Welcome back, {user.name}!</div>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Request OD
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Submit OD Request</DialogTitle>
+              <DialogDescription>
+                Fill in the details for your On Duty request
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmitRequest} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="eventName">Event Name *</Label>
+                <Input
+                  id="eventName"
+                  placeholder="Enter event name"
+                  value={newRequest.eventName}
+                  onChange={(e) => setNewRequest(prev => ({ ...prev, eventName: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="date">Date *</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={newRequest.date}
+                  onChange={(e) => setNewRequest(prev => ({ ...prev, date: e.target.value }))}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="startTime">Start Time *</Label>
+                  <Input
+                    id="startTime"
+                    type="time"
+                    value={newRequest.startTime}
+                    onChange={(e) => setNewRequest(prev => ({ ...prev, startTime: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="endTime">End Time *</Label>
+                  <Input
+                    id="endTime"
+                    type="time"
+                    value={newRequest.endTime}
+                    onChange={(e) => setNewRequest(prev => ({ ...prev, endTime: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reason">Reason for OD *</Label>
+                <Textarea
+                  id="reason"
+                  placeholder="Explain the reason for your OD request"
+                  value={newRequest.reason}
+                  onChange={(e) => setNewRequest(prev => ({ ...prev, reason: e.target.value }))}
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                Submit Request
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Pending Requests */}
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
@@ -320,8 +321,7 @@ const StudentDashboard = () => {
             )}
           </div>
         </div>
-      </main>
-    </div>
+    </Layout>
   );
 };
 
