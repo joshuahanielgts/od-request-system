@@ -7,61 +7,29 @@ import { Calendar, Clock, User, CheckCircle, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout";
 
 interface ODRequest {
   id: string;
-  studentName: string;
-  studentId: string;
-  eventName: string;
+  student_name: string;
+  student_id: string;
+  student_class: string;
+  event_name: string;
   date: string;
-  startTime: string;
-  endTime: string;
+  from_period: number;
+  to_period: number;
   reason: string;
+  supporting_document_url?: string;
+  proof_document_url: string;
   status: "pending" | "approved" | "rejected";
-  submittedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 const HODDashboard = () => {
-  const [requests, setRequests] = useState<ODRequest[]>([
-    {
-      id: "1",
-      studentName: "John Doe",
-      studentId: "CS21001",
-      eventName: "Tech Symposium",
-      date: "2024-03-15",
-      startTime: "09:00",
-      endTime: "17:00",
-      reason: "Participating in technical paper presentation on Machine Learning applications in healthcare",
-      status: "pending",
-      submittedAt: "2024-03-10"
-    },
-    {
-      id: "2",
-      studentName: "Jane Smith",
-      studentId: "CS21002",
-      eventName: "Workshop on AI",
-      date: "2024-03-20",
-      startTime: "10:00",
-      endTime: "16:00",
-      reason: "Attending comprehensive machine learning workshop for advanced skill development",
-      status: "pending",
-      submittedAt: "2024-03-12"
-    },
-    {
-      id: "3",
-      studentName: "Mike Johnson",
-      studentId: "CS21003",
-      eventName: "Coding Competition",
-      date: "2024-03-18",
-      startTime: "08:00",
-      endTime: "18:00",
-      reason: "Participating in inter-college coding competition representing our institution",
-      status: "pending",
-      submittedAt: "2024-03-13"
-    }
-  ]);
-
+  const [requests, setRequests] = useState<ODRequest[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<ODRequest | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
@@ -78,22 +46,58 @@ const HODDashboard = () => {
       navigate('/');
       return;
     }
+    fetchRequests();
   }, [user, navigate]);
 
-  const handleRequestAction = (requestId: string, action: "approved" | "rejected") => {
-    setRequests(prev => prev.map(req => 
-      req.id === requestId ? { ...req, status: action } : req
-    ));
+  const fetchRequests = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('od_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    const request = requests.find(r => r.id === requestId);
-    toast({
-      title: `Request ${action}`,
-      description: `${request?.studentName}'s OD request has been ${action}`,
-      variant: action === "approved" ? "default" : "destructive"
-    });
+      if (error) throw error;
+      setRequests((data || []) as ODRequest[]);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch requests",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    setDialogOpen(false);
-    setSelectedRequest(null);
+  const handleRequestAction = async (requestId: string, action: "approved" | "rejected") => {
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('od_requests')
+        .update({ status: action })
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      const request = requests.find(r => r.id === requestId);
+      toast({
+        title: `Request ${action}`,
+        description: `${request?.student_name}'s OD request has been ${action}`,
+        variant: action === "approved" ? "default" : "destructive"
+      });
+
+      setDialogOpen(false);
+      setSelectedRequest(null);
+      fetchRequests();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update request",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRequestClick = (request: ODRequest) => {
@@ -102,6 +106,19 @@ const HODDashboard = () => {
   };
 
   const pendingRequests = requests.filter(r => r.status === "pending");
+
+  const getPeriodText = (from: number, to: number) => {
+    const getOrdinal = (n: number) => {
+      const suffixes = ["th", "st", "nd", "rd"];
+      const v = n % 100;
+      return n + (suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0]);
+    };
+    
+    if (from === to) {
+      return `${getOrdinal(from)} period`;
+    }
+    return `${getOrdinal(from)} to ${getOrdinal(to)} period`;
+  };
 
   if (!user) {
     return null; // Will redirect
@@ -156,10 +173,10 @@ const HODDashboard = () => {
                       <div>
                         <CardTitle className="text-lg flex items-center gap-2">
                           <User className="w-4 h-4" />
-                          {request.studentName}
+                          {request.student_name}
                         </CardTitle>
                         <CardDescription className="text-sm">
-                          {request.studentId}
+                          {request.student_id} | {request.student_class}
                         </CardDescription>
                       </div>
                       <Badge variant="warning">
@@ -169,23 +186,23 @@ const HODDashboard = () => {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div>
-                      <h4 className="font-medium text-foreground">{request.eventName}</h4>
+                      <h4 className="font-medium text-foreground">{request.event_name}</h4>
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="w-4 h-4" />
-                        {request.date}
+                        {new Date(request.date).toLocaleDateString()}
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="w-4 h-4" />
-                        {request.startTime} - {request.endTime}
+                        {getPeriodText(request.from_period, request.to_period)}
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground line-clamp-2">
                       {request.reason}
                     </p>
                     <div className="text-xs text-muted-foreground">
-                      Submitted: {request.submittedAt}
+                      Submitted: {new Date(request.created_at).toLocaleDateString()}
                     </div>
                   </CardContent>
                 </Card>
@@ -202,30 +219,30 @@ const HODDashboard = () => {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <User className="w-5 h-5" />
-                  {selectedRequest.studentName} - OD Request
+                  {selectedRequest.student_name} - OD Request
                 </DialogTitle>
                 <DialogDescription>
-                  Student ID: {selectedRequest.studentId} | Submitted: {selectedRequest.submittedAt}
+                  ID: {selectedRequest.student_id} | Class: {selectedRequest.student_class} | Submitted: {new Date(selectedRequest.created_at).toLocaleDateString()}
                 </DialogDescription>
               </DialogHeader>
               
               <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">Event Name</label>
-                    <p className="text-sm bg-muted p-3 rounded-md">{selectedRequest.eventName}</p>
+                    <p className="text-sm bg-muted p-3 rounded-md">{selectedRequest.event_name}</p>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">Date</label>
-                    <p className="text-sm bg-muted p-3 rounded-md">{selectedRequest.date}</p>
+                    <p className="text-sm bg-muted p-3 rounded-md">{new Date(selectedRequest.date).toLocaleDateString()}</p>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Start Time</label>
-                    <p className="text-sm bg-muted p-3 rounded-md">{selectedRequest.startTime}</p>
+                    <label className="text-sm font-medium text-foreground">From Period</label>
+                    <p className="text-sm bg-muted p-3 rounded-md">{getPeriodText(selectedRequest.from_period, selectedRequest.from_period)}</p>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">End Time</label>
-                    <p className="text-sm bg-muted p-3 rounded-md">{selectedRequest.endTime}</p>
+                    <label className="text-sm font-medium text-foreground">To Period</label>
+                    <p className="text-sm bg-muted p-3 rounded-md">{getPeriodText(selectedRequest.to_period, selectedRequest.to_period)}</p>
                   </div>
                 </div>
                 
@@ -238,17 +255,19 @@ const HODDashboard = () => {
                   <Button
                     onClick={() => handleRequestAction(selectedRequest.id, "approved")}
                     className="flex-1 bg-success hover:bg-success/90 text-success-foreground"
+                    disabled={loading}
                   >
                     <CheckCircle className="w-4 h-4 mr-2" />
-                    Approve Request
+                    {loading ? "Processing..." : "Approve Request"}
                   </Button>
                   <Button
                     variant="destructive"
                     onClick={() => handleRequestAction(selectedRequest.id, "rejected")}
                     className="flex-1"
+                    disabled={loading}
                   >
                     <XCircle className="w-4 h-4 mr-2" />
-                    Reject Request
+                    {loading ? "Processing..." : "Reject Request"}
                   </Button>
                 </div>
               </div>

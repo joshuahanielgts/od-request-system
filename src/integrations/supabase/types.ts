@@ -14,7 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      od_requests: {
+        Row: {
+          created_at: string
+          date: string
+          event_name: string
+          from_period: number
+          id: string
+          proof_document_url: string
+          reason: string
+          status: string
+          student_class: string
+          student_id: string
+          student_name: string
+          supporting_document_url: string | null
+          to_period: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          event_name: string
+          from_period: number
+          id?: string
+          proof_document_url: string
+          reason: string
+          status?: string
+          student_class: string
+          student_id: string
+          student_name: string
+          supporting_document_url?: string | null
+          to_period: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          event_name?: string
+          from_period?: number
+          id?: string
+          proof_document_url?: string
+          reason?: string
+          status?: string
+          student_class?: string
+          student_id?: string
+          student_name?: string
+          supporting_document_url?: string | null
+          to_period?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

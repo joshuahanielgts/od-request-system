@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,24 +6,35 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Users, Clock, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout";
 
-interface Student {
+interface ODRequest {
   id: string;
-  name: string;
-  eventName: string;
-  fromPeriod: number;
-  toPeriod: number;
+  student_name: string;
+  student_id: string;
+  student_class: string;
+  event_name: string;
   date: string;
+  from_period: number;
+  to_period: number;
+  reason: string;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+  supporting_document_url?: string;
+  proof_document_url: string;
+  updated_at: string;
 }
 
 interface ClassData {
   className: string;
-  students: Student[];
+  students: ODRequest[];
 }
 
 const FacultyDashboard = () => {
   const [selectedClass, setSelectedClass] = useState<string>("");
+  const [approvedRequests, setApprovedRequests] = useState<ODRequest[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -37,112 +48,35 @@ const FacultyDashboard = () => {
       navigate('/');
       return;
     }
+    fetchApprovedRequests();
   }, [user, navigate]);
 
-  const classesData: ClassData[] = [
-    {
-      className: "I CSE A",
-      students: [
-        {
-          id: "CS21001",
-          name: "John Doe",
-          eventName: "Tech Symposium",
-          fromPeriod: 2,
-          toPeriod: 7,
-          date: "2024-03-15"
-        },
-        {
-          id: "CS21003",
-          name: "Alice Johnson",
-          eventName: "Coding Workshop",
-          fromPeriod: 1,
-          toPeriod: 4,
-          date: "2024-03-15"
-        }
-      ]
-    },
-    {
-      className: "I CSE B",
-      students: [
-        {
-          id: "CS21025",
-          name: "Bob Wilson",
-          eventName: "AI Conference",
-          fromPeriod: 3,
-          toPeriod: 6,
-          date: "2024-03-15"
-        }
-      ]
-    },
-    {
-      className: "II CSE A",
-      students: [
-        {
-          id: "CS20015",
-          name: "Sarah Davis",
-          eventName: "Research Presentation",
-          fromPeriod: 1,
-          toPeriod: 5,
-          date: "2024-03-15"
-        },
-        {
-          id: "CS20027",
-          name: "Mike Brown",
-          eventName: "Industry Visit",
-          fromPeriod: 4,
-          toPeriod: 7,
-          date: "2024-03-15"
-        }
-      ]
-    },
-    {
-      className: "II CSE B",
-      students: [
-        {
-          id: "CS20045",
-          name: "Emma Wilson",
-          eventName: "Hackathon",
-          fromPeriod: 2,
-          toPeriod: 7,
-          date: "2024-03-15"
-        }
-      ]
-    },
-    {
-      className: "III CSE A",
-      students: []
-    },
-    {
-      className: "III CSE B",
-      students: [
-        {
-          id: "CS19032",
-          name: "David Lee",
-          eventName: "Internship Interview",
-          fromPeriod: 5,
-          toPeriod: 7,
-          date: "2024-03-15"
-        }
-      ]
-    },
-    {
-      className: "IV CSE A",
-      students: []
-    },
-    {
-      className: "IV CSE B",
-      students: [
-        {
-          id: "CS18021",
-          name: "Lisa Anderson",
-          eventName: "Campus Recruitment",
-          fromPeriod: 1,
-          toPeriod: 3,
-          date: "2024-03-15"
-        }
-      ]
+  const fetchApprovedRequests = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('od_requests')
+        .select('*')
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setApprovedRequests((data || []) as ODRequest[]);
+    } catch (error) {
+      console.error('Error fetching approved requests:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  // Group approved requests by class
+  const classesData: ClassData[] = React.useMemo(() => {
+    const classes = ["I CSE A", "I CSE B", "II CSE A", "II CSE B", "III CSE A", "III CSE B", "IV CSE A", "IV CSE B"];
+    
+    return classes.map(className => ({
+      className,
+      students: approvedRequests.filter(req => req.student_class === className)
+    }));
+  }, [approvedRequests]);
 
   const getPeriodText = (from: number, to: number) => {
     if (from === to) {
@@ -275,16 +209,16 @@ const FacultyDashboard = () => {
                         <CardContent className="p-4">
                           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="space-y-1">
-                              <h4 className="font-medium text-foreground">{student.name}</h4>
-                              <p className="text-sm text-muted-foreground">ID: {student.id}</p>
+                              <h4 className="font-medium text-foreground">{student.student_name}</h4>
+                              <p className="text-sm text-muted-foreground">ID: {student.student_id}</p>
                             </div>
                             
                             <div className="flex flex-col md:flex-row md:items-center gap-4">
                               <div className="space-y-1">
-                                <p className="text-sm font-medium text-foreground">{student.eventName}</p>
+                                <p className="text-sm font-medium text-foreground">{student.event_name}</p>
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                   <Clock className="w-4 h-4" />
-                                  <span>{getPeriodText(student.fromPeriod, student.toPeriod)}</span>
+                                  <span>{getPeriodText(student.from_period, student.to_period)}</span>
                                 </div>
                               </div>
                               
