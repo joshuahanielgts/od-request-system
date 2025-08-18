@@ -1,17 +1,14 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 
 interface User {
-  id: string;
-  username: string;
-  name: string;
   role: 'student' | 'hod' | 'faculty';
+  name: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => Promise<void>;
+  selectRole: (role: 'student' | 'hod' | 'faculty') => void;
+  logout: () => void;
   loading: boolean;
 }
 
@@ -34,7 +31,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in (from localStorage)
+    // Check if user role is already selected (from localStorage)
     const storedUser = localStorage.getItem('od_user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
@@ -42,46 +39,32 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setLoading(false);
   }, []);
 
-  const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    try {
-      setLoading(true);
-      
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('username', username)
-        .eq('password', password)
-        .single();
-
-      if (error || !data) {
-        return { success: false, error: 'Invalid username or password' };
-      }
-
-      const userData: User = {
-        id: data.id,
-        username: data.username,
-        name: data.name,
-        role: data.role as 'student' | 'hod' | 'faculty'
-      };
-
-      setUser(userData);
-      localStorage.setItem('od_user', JSON.stringify(userData));
-      
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: 'Login failed. Please try again.' };
-    } finally {
-      setLoading(false);
+  const getRoleName = (role: 'student' | 'hod' | 'faculty'): string => {
+    switch (role) {
+      case 'student': return 'Student';
+      case 'hod': return 'HOD';
+      case 'faculty': return 'Faculty';
+      default: return 'User';
     }
   };
 
-  const logout = async (): Promise<void> => {
+  const selectRole = (role: 'student' | 'hod' | 'faculty'): void => {
+    const userData: User = {
+      role,
+      name: getRoleName(role)
+    };
+
+    setUser(userData);
+    localStorage.setItem('od_user', JSON.stringify(userData));
+  };
+
+  const logout = (): void => {
     setUser(null);
     localStorage.removeItem('od_user');
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, selectRole, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

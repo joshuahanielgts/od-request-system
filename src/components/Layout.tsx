@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { Home } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 interface LayoutProps {
@@ -11,8 +11,8 @@ interface LayoutProps {
 const Layout = ({ children, title }: LayoutProps) => {
   const { user, logout } = useAuth();
 
-  const handleLogout = async () => {
-    await logout();
+  const handleBackToHome = () => {
+    logout();
     window.location.href = '/';
   };
 
@@ -42,11 +42,11 @@ const Layout = ({ children, title }: LayoutProps) => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={handleLogout}
+                  onClick={handleBackToHome}
                   className="gap-2"
                 >
-                  <LogOut className="h-4 w-4" />
-                  Logout
+                  <Home className="h-4 w-4" />
+                  Home
                 </Button>
               </div>
             )}
