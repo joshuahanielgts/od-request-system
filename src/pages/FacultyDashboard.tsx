@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Users, Clock, BookOpen, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -13,7 +15,9 @@ interface ODRequest {
   id: string;
   student_name: string;
   student_id: string;
-  student_class: string;
+  student_year: string;
+  student_department: string;
+  student_section: string;
   event_name: string;
   date: string;
   from_period: number;
@@ -35,6 +39,7 @@ const FacultyDashboard = () => {
   const [selectedClass, setSelectedClass] = useState<string>("");
   const [approvedRequests, setApprovedRequests] = useState<ODRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<string>("");
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -51,13 +56,19 @@ const FacultyDashboard = () => {
     fetchApprovedRequests();
   }, [user, navigate]);
 
-  const fetchApprovedRequests = async () => {
+  const fetchApprovedRequests = async (date?: string) => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('od_requests')
         .select('*')
         .eq('status', 'approved')
         .order('created_at', { ascending: false });
+
+      if (date) {
+        query = query.eq('date', date);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setApprovedRequests((data || []) as ODRequest[]);
@@ -70,13 +81,27 @@ const FacultyDashboard = () => {
 
   // Group approved requests by class
   const classesData: ClassData[] = React.useMemo(() => {
-    const classes = ["I CSE A", "I CSE B", "II CSE A", "II CSE B", "III CSE A", "III CSE B", "IV CSE A", "IV CSE B"];
+    const classes = [
+      "1st Year CSE A", "1st Year CSE B", "1st Year ECE A", "1st Year ECE B",
+      "2nd Year CSE A", "2nd Year CSE B", "2nd Year ECE A", "2nd Year ECE B", 
+      "3rd Year CSE A", "3rd Year CSE B", "3rd Year ECE A", "3rd Year ECE B",
+      "4th Year CSE A", "4th Year CSE B", "4th Year ECE A", "4th Year ECE B"
+    ];
     
     return classes.map(className => ({
       className,
-      students: approvedRequests.filter(req => req.student_class === className)
+      students: approvedRequests.filter(req => {
+        const fullClass = `${req.student_year} ${req.student_department} ${req.student_section}`;
+        return fullClass === className;
+      })
     }));
   }, [approvedRequests]);
+
+  const handleDateChange = (date: string) => {
+    setSelectedDate(date);
+    setLoading(true);
+    fetchApprovedRequests(date);
+  };
 
   const getPeriodText = (from: number, to: number) => {
     if (from === to) {
@@ -102,21 +127,29 @@ const FacultyDashboard = () => {
     <Layout title="Faculty Dashboard">
       <div className="mb-6 text-muted-foreground">Welcome back, {user.name}!</div>
       <div className="space-y-6">
-
-          {/* Class Selection */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5" />
-                Select Class
-              </CardTitle>
-              <CardDescription>
-                Choose a class to view students currently on OD
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+        {/* Date Filter */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5" />
+              Filter Options
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="date">Filter by Date</Label>
+              <Input
+                id="date"
+                type="date"
+                value={selectedDate}
+                onChange={(e) => handleDateChange(e.target.value)}
+                className="w-48"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="class">Select Class</Label>
               <Select value={selectedClass} onValueChange={setSelectedClass}>
-                <SelectTrigger className="w-full max-w-xs">
+                <SelectTrigger className="w-60">
                   <SelectValue placeholder="Select a class" />
                 </SelectTrigger>
                 <SelectContent>
@@ -132,8 +165,9 @@ const FacultyDashboard = () => {
                   ))}
                 </SelectContent>
               </Select>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
           {/* Class Details */}
           {selectedClass && selectedClassData && (
@@ -167,7 +201,8 @@ const FacultyDashboard = () => {
                           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="space-y-1">
                               <h4 className="font-medium text-foreground">{student.student_name}</h4>
-                              <p className="text-sm text-muted-foreground">ID: {student.student_id}</p>
+                              <p className="text-sm text-muted-foreground">Registration: {student.student_id}</p>
+                              <p className="text-sm text-muted-foreground">{student.student_year} {student.student_department} {student.student_section}</p>
                             </div>
                             
                             <div className="flex flex-col md:flex-row md:items-center gap-4">
@@ -183,24 +218,30 @@ const FacultyDashboard = () => {
                                  <Badge variant="outline" className="w-fit">
                                    On Duty
                                  </Badge>
-                                 <div className="flex gap-1">
-                                   {student.supporting_document_url && (
-                                     <Button
-                                       variant="outline"
-                                       size="sm"
-                                       onClick={() => window.open(`${supabase.storage.from('od-documents').getPublicUrl(student.supporting_document_url!).data.publicUrl}`, '_blank')}
-                                     >
-                                       <FileText className="w-4 h-4" />
-                                     </Button>
-                                   )}
-                                   <Button
-                                     variant="outline"
-                                     size="sm"
-                                     onClick={() => window.open(`${supabase.storage.from('od-documents').getPublicUrl(student.proof_document_url).data.publicUrl}`, '_blank')}
-                                   >
-                                     <FileText className="w-4 h-4" />
-                                   </Button>
-                                 </div>
+                                  <div className="flex gap-1">
+                                    {student.supporting_document_url && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          const { data: urlData } = supabase.storage.from('od-documents').getPublicUrl(student.supporting_document_url!);
+                                          window.open(urlData.publicUrl, '_blank');
+                                        }}
+                                      >
+                                        <FileText className="w-4 h-4" />
+                                      </Button>
+                                    )}
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        const { data: urlData } = supabase.storage.from('od-documents').getPublicUrl(student.proof_document_url);
+                                        window.open(urlData.publicUrl, '_blank');
+                                      }}
+                                    >
+                                      <FileText className="w-4 h-4" />
+                                    </Button>
+                                  </div>
                                </div>
                             </div>
                           </div>
@@ -222,38 +263,39 @@ const FacultyDashboard = () => {
                   All Classes Overview
                 </CardTitle>
                 <CardDescription>
-                  Quick overview of OD status across all classes
+                  {selectedDate ? `Classes with OD students on ${new Date(selectedDate).toLocaleDateString()}` : `Classes with OD students today`}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {classesData.map((classData) => (
+                  {classesData.filter(classData => classData.students.length > 0).map((classData) => (
                     <Card 
                       key={classData.className}
-                      className={`cursor-pointer hover:shadow-md transition-shadow ${
-                        classData.students.length > 0 ? 'border-primary/20' : ''
-                      }`}
+                      className="cursor-pointer hover:shadow-md transition-shadow border-primary/20"
                       onClick={() => setSelectedClass(classData.className)}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                            <div>
                              <h4 className="font-medium text-foreground">{classData.className}</h4>
-                             {classData.students.length > 0 && (
-                               <p className="text-sm text-muted-foreground">
-                                 {classData.students.length} on OD
-                               </p>
-                             )}
+                             <p className="text-sm text-muted-foreground">
+                               {classData.students.length} students on OD
+                             </p>
                            </div>
-                          {classData.students.length > 0 && (
-                            <Badge variant="warning">
-                              {classData.students.length}
-                            </Badge>
-                          )}
+                          <Badge variant="warning">
+                            {classData.students.length}
+                          </Badge>
                         </div>
                       </CardContent>
                     </Card>
                   ))}
+                  {classesData.filter(classData => classData.students.length > 0).length === 0 && (
+                    <div className="col-span-full text-center py-8 text-muted-foreground">
+                      <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <h3 className="text-lg font-medium mb-2">No students on OD</h3>
+                      <p>{selectedDate ? 'No students were on OD on the selected date.' : 'All students are present today.'}</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

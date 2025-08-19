@@ -18,7 +18,9 @@ interface ODRequest {
   id: string;
   student_name: string;
   student_id: string;
-  student_class: string;
+  student_year: string;
+  student_department: string;
+  student_section: string;
   event_name: string;
   date: string;
   from_period: number;
@@ -38,12 +40,12 @@ const StudentDashboard = () => {
   const [newRequest, setNewRequest] = useState({
     eventName: "",
     date: "",
-    fromPeriod: "",
-    toPeriod: "",
+    fromPeriod: "1",
+    toPeriod: "1",
     reason: "",
     supportingDocument: null as File | null,
     proofDocument: null as File | null,
-    students: [{ studentName: "", studentId: "", studentClass: "" }]
+    students: [{ studentName: "", registrationNumber: "", year: "", department: "", section: "" }]
   });
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -99,7 +101,7 @@ const StudentDashboard = () => {
     
     // Validate students
     for (const student of newRequest.students) {
-      if (!student.studentName || !student.studentId || !student.studentClass) {
+      if (!student.studentName || !student.registrationNumber || !student.year || !student.department || !student.section) {
         toast({
           title: "Missing Information",
           description: "Please fill in all student details",
@@ -130,23 +132,31 @@ const StudentDashboard = () => {
         supportingUrl = await uploadFile(newRequest.supportingDocument, 'supporting');
       }
 
-      // Insert requests for all students
-      const requests = newRequest.students.map(student => ({
-        student_name: student.studentName,
-        student_id: student.studentId,
-        student_class: student.studentClass,
-        event_name: newRequest.eventName,
-        date: newRequest.date,
-        from_period: parseInt(newRequest.fromPeriod),
-        to_period: parseInt(newRequest.toPeriod),
-        reason: newRequest.reason,
-        supporting_document_url: supportingUrl,
-        proof_document_url: proofUrl
+      // Create single request with all students combined
+      const allStudents = newRequest.students.map(s => ({
+        name: s.studentName,
+        registrationNumber: s.registrationNumber,
+        year: s.year,
+        department: s.department,
+        section: s.section
       }));
 
       const { error } = await supabase
         .from('od_requests')
-        .insert(requests);
+        .insert({
+          student_name: allStudents.map(s => s.name).join(', '),
+          student_id: allStudents.map(s => s.registrationNumber).join(', '),
+          student_year: allStudents[0].year, // Use first student's details for grouping
+          student_department: allStudents[0].department,
+          student_section: allStudents[0].section,
+          event_name: newRequest.eventName,
+          date: newRequest.date,
+          from_period: parseInt(newRequest.fromPeriod),
+          to_period: parseInt(newRequest.toPeriod),
+          reason: newRequest.reason,
+          supporting_document_url: supportingUrl,
+          proof_document_url: proofUrl
+        });
 
       if (error) throw error;
 
@@ -159,12 +169,12 @@ const StudentDashboard = () => {
       setNewRequest({
         eventName: "",
         date: "",
-        fromPeriod: "",
-        toPeriod: "",
+        fromPeriod: "1",
+        toPeriod: "1",
         reason: "",
         supportingDocument: null,
         proofDocument: null,
-        students: [{ studentName: "", studentId: "", studentClass: "" }]
+        students: [{ studentName: "", registrationNumber: "", year: "", department: "", section: "" }]
       });
       
       setDialogOpen(false);
@@ -244,7 +254,7 @@ const StudentDashboard = () => {
                     size="sm"
                     onClick={() => setNewRequest(prev => ({
                       ...prev,
-                      students: [...prev.students, { studentName: "", studentId: "", studentClass: "" }]
+                      students: [...prev.students, { studentName: "", registrationNumber: "", year: "", department: "", section: "" }]
                     }))}
                   >
                     <Plus className="w-4 h-4 mr-2" />
@@ -270,7 +280,7 @@ const StudentDashboard = () => {
                         </Button>
                       )}
                     </div>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2">
                         <Label>Name *</Label>
                         <Input
@@ -285,30 +295,87 @@ const StudentDashboard = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Student ID *</Label>
+                        <Label>Registration Number *</Label>
                         <Input
-                          placeholder="Student ID"
-                          value={student.studentId}
+                          placeholder="Registration number"
+                          value={student.registrationNumber}
                           onChange={(e) => setNewRequest(prev => ({
                             ...prev,
                             students: prev.students.map((s, i) => 
-                              i === index ? { ...s, studentId: e.target.value } : s
+                              i === index ? { ...s, registrationNumber: e.target.value } : s
                             )
                           }))}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label>Class *</Label>
-                        <Input
-                          placeholder="e.g., I CSE A"
-                          value={student.studentClass}
-                          onChange={(e) => setNewRequest(prev => ({
-                            ...prev,
-                            students: prev.students.map((s, i) => 
-                              i === index ? { ...s, studentClass: e.target.value } : s
-                            )
-                          }))}
-                        />
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>Year *</Label>
+                          <Select 
+                            value={student.year} 
+                            onValueChange={(value) => setNewRequest(prev => ({
+                              ...prev,
+                              students: prev.students.map((s, i) => 
+                                i === index ? { ...s, year: value } : s
+                              )
+                            }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Year" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1st Year">1st Year</SelectItem>
+                              <SelectItem value="2nd Year">2nd Year</SelectItem>
+                              <SelectItem value="3rd Year">3rd Year</SelectItem>
+                              <SelectItem value="4th Year">4th Year</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Department *</Label>
+                          <Select 
+                            value={student.department} 
+                            onValueChange={(value) => setNewRequest(prev => ({
+                              ...prev,
+                              students: prev.students.map((s, i) => 
+                                i === index ? { ...s, department: value } : s
+                              )
+                            }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Dept" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="CSE">CSE</SelectItem>
+                              <SelectItem value="ECE">ECE</SelectItem>
+                              <SelectItem value="EEE">EEE</SelectItem>
+                              <SelectItem value="MECH">MECH</SelectItem>
+                              <SelectItem value="CIVIL">CIVIL</SelectItem>
+                              <SelectItem value="IT">IT</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Section *</Label>
+                          <Select 
+                            value={student.section} 
+                            onValueChange={(value) => setNewRequest(prev => ({
+                              ...prev,
+                              students: prev.students.map((s, i) => 
+                                i === index ? { ...s, section: value } : s
+                              )
+                            }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Sec" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="A">A</SelectItem>
+                              <SelectItem value="B">B</SelectItem>
+                              <SelectItem value="C">C</SelectItem>
+                              <SelectItem value="D">D</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     </div>
                   </Card>
@@ -337,7 +404,27 @@ const StudentDashboard = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="fromPeriod">From Period *</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="fromPeriod">From Period *</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewRequest(prev => ({ ...prev, fromPeriod: "1" }))}
+                      >
+                        1st Period
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewRequest(prev => ({ ...prev, fromPeriod: "2" }))}
+                      >
+                        2nd Period
+                      </Button>
+                    </div>
+                  </div>
                   <Select value={newRequest.fromPeriod} onValueChange={(value) => setNewRequest(prev => ({ ...prev, fromPeriod: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select from period" />
@@ -354,13 +441,38 @@ const StudentDashboard = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="toPeriod">To Period *</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="toPeriod">To Period *</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewRequest(prev => ({ ...prev, toPeriod: "5" }))}
+                      >
+                        5th Period
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewRequest(prev => ({ ...prev, toPeriod: "7" }))}
+                      >
+                        7th Period
+                      </Button>
+                    </div>
+                  </div>
                   <Select value={newRequest.toPeriod} onValueChange={(value) => setNewRequest(prev => ({ ...prev, toPeriod: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select to period" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="1">1st Period</SelectItem>
+                      <SelectItem value="2">2nd Period</SelectItem>
+                      <SelectItem value="3">3rd Period</SelectItem>
+                      <SelectItem value="4">4th Period</SelectItem>
                       <SelectItem value="5">5th Period</SelectItem>
+                      <SelectItem value="6">6th Period</SelectItem>
                       <SelectItem value="7">7th Period</SelectItem>
                     </SelectContent>
                   </Select>

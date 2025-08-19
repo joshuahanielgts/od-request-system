@@ -24,9 +24,11 @@ export type Database = {
           proof_document_url: string
           reason: string
           status: string
-          student_class: string
+          student_department: string
           student_id: string
           student_name: string
+          student_section: string
+          student_year: string
           supporting_document_url: string | null
           to_period: number
           updated_at: string
@@ -40,9 +42,11 @@ export type Database = {
           proof_document_url: string
           reason: string
           status?: string
-          student_class: string
+          student_department?: string
           student_id: string
           student_name: string
+          student_section?: string
+          student_year?: string
           supporting_document_url?: string | null
           to_period: number
           updated_at?: string
@@ -56,9 +60,11 @@ export type Database = {
           proof_document_url?: string
           reason?: string
           status?: string
-          student_class?: string
+          student_department?: string
           student_id?: string
           student_name?: string
+          student_section?: string
+          student_year?: string
           supporting_document_url?: string | null
           to_period?: number
           updated_at?: string

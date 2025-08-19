@@ -3,6 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Calendar, Clock, User, CheckCircle, XCircle, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -14,7 +16,9 @@ interface ODRequest {
   id: string;
   student_name: string;
   student_id: string;
-  student_class: string;
+  student_year: string;
+  student_department: string;
+  student_section: string;
   event_name: string;
   date: string;
   from_period: number;
@@ -32,6 +36,7 @@ const HODDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<ODRequest | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string>("");
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -49,12 +54,21 @@ const HODDashboard = () => {
     fetchRequests();
   }, [user, navigate]);
 
-  const fetchRequests = async () => {
+  const fetchRequests = async (date?: string) => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('od_requests')
         .select('*')
         .order('created_at', { ascending: false });
+      
+      if (date) {
+        query = query.eq('date', date);
+      } else {
+        // Show only pending requests if no date selected
+        query = query.eq('status', 'pending');
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setRequests((data || []) as ODRequest[]);
@@ -105,7 +119,13 @@ const HODDashboard = () => {
     setDialogOpen(true);
   };
 
-  const pendingRequests = requests.filter(r => r.status === "pending");
+  const handleDateChange = (date: string) => {
+    setSelectedDate(date);
+    setLoading(true);
+    fetchRequests(date);
+  };
+
+  const filteredRequests = selectedDate ? requests : requests.filter(r => r.status === "pending");
 
   const getPeriodText = (from: number, to: number) => {
     const getOrdinal = (n: number) => {
@@ -130,27 +150,25 @@ const HODDashboard = () => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold text-foreground">
-              Pending Approvals ({pendingRequests.length})
+              {selectedDate ? `Requests for ${new Date(selectedDate).toLocaleDateString()}` : `Pending Approvals`} ({filteredRequests.length})
             </h2>
             <p className="text-muted-foreground">Welcome back, {user.name}!</p>
           </div>
-          <div className="flex gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-warning"></div>
-              <span>Pending</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-success"></div>
-              <span>Approved</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-destructive"></div>
-              <span>Rejected</span>
+          <div className="flex items-center gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="date">Filter by Date</Label>
+              <Input
+                id="date"
+                type="date"
+                value={selectedDate}
+                onChange={(e) => handleDateChange(e.target.value)}
+                className="w-48"
+              />
             </div>
           </div>
         </div>
 
-          {pendingRequests.length === 0 ? (
+          {filteredRequests.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center">
                 <div className="text-muted-foreground">
@@ -162,7 +180,7 @@ const HODDashboard = () => {
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pendingRequests.map((request) => (
+              {filteredRequests.map((request) => (
                 <Card 
                   key={request.id}
                   className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
@@ -176,11 +194,14 @@ const HODDashboard = () => {
                           {request.student_name}
                         </CardTitle>
                         <CardDescription className="text-sm">
-                          {request.student_id} | {request.student_class}
+                          {request.student_id} | {request.student_year} {request.student_department} {request.student_section}
                         </CardDescription>
                       </div>
-                      <Badge variant="warning">
-                        Pending
+                      <Badge variant={
+                        request.status === 'pending' ? 'warning' : 
+                        request.status === 'approved' ? 'default' : 'destructive'
+                      }>
+                        {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -222,7 +243,7 @@ const HODDashboard = () => {
                   {selectedRequest.student_name} - OD Request
                 </DialogTitle>
                 <DialogDescription>
-                  ID: {selectedRequest.student_id} | Class: {selectedRequest.student_class} | Submitted: {new Date(selectedRequest.created_at).toLocaleDateString()}
+                  Registration: {selectedRequest.student_id} | {selectedRequest.student_year} {selectedRequest.student_department} {selectedRequest.student_section} | Submitted: {new Date(selectedRequest.created_at).toLocaleDateString()}
                 </DialogDescription>
               </DialogHeader>
               
@@ -261,7 +282,10 @@ const HODDashboard = () => {
                           variant="outline"
                           size="sm"
                           className="w-full justify-start"
-                          onClick={() => window.open(`${supabase.storage.from('od-documents').getPublicUrl(selectedRequest.supporting_document_url!).data.publicUrl}`, '_blank')}
+                          onClick={() => {
+                            const { data: urlData } = supabase.storage.from('od-documents').getPublicUrl(selectedRequest.supporting_document_url!);
+                            window.open(urlData.publicUrl, '_blank');
+                          }}
                         >
                           <FileText className="w-4 h-4 mr-2" />
                           View Document
@@ -274,7 +298,10 @@ const HODDashboard = () => {
                         variant="outline"
                         size="sm"
                         className="w-full justify-start"
-                        onClick={() => window.open(`${supabase.storage.from('od-documents').getPublicUrl(selectedRequest.proof_document_url).data.publicUrl}`, '_blank')}
+                        onClick={() => {
+                          const { data: urlData } = supabase.storage.from('od-documents').getPublicUrl(selectedRequest.proof_document_url);
+                          window.open(urlData.publicUrl, '_blank');
+                        }}
                       >
                         <FileText className="w-4 h-4 mr-2" />
                         View Document
@@ -284,23 +311,34 @@ const HODDashboard = () => {
                 </div>
 
                 <div className="flex gap-3 pt-4">
-                  <Button
-                    onClick={() => handleRequestAction(selectedRequest.id, "approved")}
-                    className="flex-1 bg-success hover:bg-success/90 text-success-foreground"
-                    disabled={loading}
-                  >
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    {loading ? "Processing..." : "Approve Request"}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleRequestAction(selectedRequest.id, "rejected")}
-                    className="flex-1"
-                    disabled={loading}
-                  >
-                    <XCircle className="w-4 h-4 mr-2" />
-                    {loading ? "Processing..." : "Reject Request"}
-                  </Button>
+                  {selectedRequest.status === 'pending' && (
+                    <>
+                      <Button
+                        onClick={() => handleRequestAction(selectedRequest.id, "approved")}
+                        className="flex-1 bg-success hover:bg-success/90 text-success-foreground"
+                        disabled={loading}
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        {loading ? "Processing..." : "Approve Request"}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => handleRequestAction(selectedRequest.id, "rejected")}
+                        className="flex-1"
+                        disabled={loading}
+                      >
+                        <XCircle className="w-4 h-4 mr-2" />
+                        {loading ? "Processing..." : "Reject Request"}
+                      </Button>
+                    </>
+                  )}
+                  {selectedRequest.status !== 'pending' && (
+                    <div className="flex-1 text-center p-4 bg-muted rounded-lg">
+                      <Badge variant={selectedRequest.status === 'approved' ? 'default' : 'destructive'} className="text-sm">
+                        Request {selectedRequest.status.charAt(0).toUpperCase() + selectedRequest.status.slice(1)}
+                      </Badge>
+                    </div>
+                  )}
                 </div>
               </div>
             </>
