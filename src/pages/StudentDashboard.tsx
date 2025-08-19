@@ -36,16 +36,14 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   const [newRequest, setNewRequest] = useState({
-    studentName: "",
-    studentId: "",
-    studentClass: "",
     eventName: "",
     date: "",
     fromPeriod: "",
     toPeriod: "",
     reason: "",
     supportingDocument: null as File | null,
-    proofDocument: null as File | null
+    proofDocument: null as File | null,
+    students: [{ studentName: "", studentId: "", studentClass: "" }]
   });
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -99,70 +97,82 @@ const StudentDashboard = () => {
   const handleSubmitRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newRequest.studentName || !newRequest.studentId || !newRequest.studentClass || 
-        !newRequest.eventName || !newRequest.date || !newRequest.fromPeriod || 
+    // Validate students
+    for (const student of newRequest.students) {
+      if (!student.studentName || !student.studentId || !student.studentClass) {
+        toast({
+          title: "Missing Information",
+          description: "Please fill in all student details",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+    
+    if (!newRequest.eventName || !newRequest.date || !newRequest.fromPeriod || 
         !newRequest.toPeriod || !newRequest.reason || !newRequest.proofDocument) {
       toast({
         title: "Missing Information",
-        description: "Please fill all required fields and upload proof document",
+        description: "Please fill in all required fields",
         variant: "destructive"
       });
       return;
     }
 
+    setLoading(true);
     try {
-      setLoading(true);
+      // Upload proof document (required)
+      const proofUrl = await uploadFile(newRequest.proofDocument, 'proof');
       
-      // Upload documents
-      const proofPath = await uploadFile(newRequest.proofDocument, 'proof');
-      let supportingPath = null;
-      
+      // Upload supporting document (optional)
+      let supportingUrl = null;
       if (newRequest.supportingDocument) {
-        supportingPath = await uploadFile(newRequest.supportingDocument, 'supporting');
+        supportingUrl = await uploadFile(newRequest.supportingDocument, 'supporting');
       }
 
-      // Insert request
+      // Insert requests for all students
+      const requests = newRequest.students.map(student => ({
+        student_name: student.studentName,
+        student_id: student.studentId,
+        student_class: student.studentClass,
+        event_name: newRequest.eventName,
+        date: newRequest.date,
+        from_period: parseInt(newRequest.fromPeriod),
+        to_period: parseInt(newRequest.toPeriod),
+        reason: newRequest.reason,
+        supporting_document_url: supportingUrl,
+        proof_document_url: proofUrl
+      }));
+
       const { error } = await supabase
         .from('od_requests')
-        .insert({
-          student_name: newRequest.studentName,
-          student_id: newRequest.studentId,
-          student_class: newRequest.studentClass,
-          event_name: newRequest.eventName,
-          date: newRequest.date,
-          from_period: parseInt(newRequest.fromPeriod),
-          to_period: parseInt(newRequest.toPeriod),
-          reason: newRequest.reason,
-          supporting_document_url: supportingPath,
-          proof_document_url: proofPath
-        });
+        .insert(requests);
 
       if (error) throw error;
 
+      toast({
+        title: "Success",
+        description: `OD request(s) submitted successfully for ${newRequest.students.length} student(s)`
+      });
+
+      // Reset form
       setNewRequest({
-        studentName: "",
-        studentId: "",
-        studentClass: "",
         eventName: "",
         date: "",
         fromPeriod: "",
         toPeriod: "",
         reason: "",
         supportingDocument: null,
-        proofDocument: null
+        proofDocument: null,
+        students: [{ studentName: "", studentId: "", studentClass: "" }]
       });
+      
       setDialogOpen(false);
-
-      toast({
-        title: "Request Submitted",
-        description: "Your OD request has been submitted successfully"
-      });
-
       fetchRequests();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to submit request",
+        description: error.message || "Failed to submit request",
         variant: "destructive"
       });
     } finally {
@@ -216,7 +226,7 @@ const StudentDashboard = () => {
               Request OD
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Submit OD Request</DialogTitle>
               <DialogDescription>
@@ -224,46 +234,95 @@ const StudentDashboard = () => {
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmitRequest} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="studentName">Student Name *</Label>
-                  <Input
-                    id="studentName"
-                    placeholder="Enter your name"
-                    value={newRequest.studentName}
-                    onChange={(e) => setNewRequest(prev => ({ ...prev, studentName: e.target.value }))}
-                  />
+              {/* Students Section */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">Students</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setNewRequest(prev => ({
+                      ...prev,
+                      students: [...prev.students, { studentName: "", studentId: "", studentClass: "" }]
+                    }))}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Student
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="studentId">Student ID *</Label>
-                  <Input
-                    id="studentId"
-                    placeholder="Enter your student ID"
-                    value={newRequest.studentId}
-                    onChange={(e) => setNewRequest(prev => ({ ...prev, studentId: e.target.value }))}
-                  />
-                </div>
+                
+                {newRequest.students.map((student, index) => (
+                  <Card key={index} className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-medium">Student {index + 1}</h4>
+                      {newRequest.students.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setNewRequest(prev => ({
+                            ...prev,
+                            students: prev.students.filter((_, i) => i !== index)
+                          }))}
+                        >
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>Name *</Label>
+                        <Input
+                          placeholder="Student name"
+                          value={student.studentName}
+                          onChange={(e) => setNewRequest(prev => ({
+                            ...prev,
+                            students: prev.students.map((s, i) => 
+                              i === index ? { ...s, studentName: e.target.value } : s
+                            )
+                          }))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Student ID *</Label>
+                        <Input
+                          placeholder="Student ID"
+                          value={student.studentId}
+                          onChange={(e) => setNewRequest(prev => ({
+                            ...prev,
+                            students: prev.students.map((s, i) => 
+                              i === index ? { ...s, studentId: e.target.value } : s
+                            )
+                          }))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Class *</Label>
+                        <Input
+                          placeholder="e.g., I CSE A"
+                          value={student.studentClass}
+                          onChange={(e) => setNewRequest(prev => ({
+                            ...prev,
+                            students: prev.students.map((s, i) => 
+                              i === index ? { ...s, studentClass: e.target.value } : s
+                            )
+                          }))}
+                        />
+                      </div>
+                    </div>
+                  </Card>
+                ))}
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="studentClass">Class *</Label>
-                  <Input
-                    id="studentClass"
-                    placeholder="e.g., I CSE A"
-                    value={newRequest.studentClass}
-                    onChange={(e) => setNewRequest(prev => ({ ...prev, studentClass: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="date">Date *</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={newRequest.date}
-                    onChange={(e) => setNewRequest(prev => ({ ...prev, date: e.target.value }))}
-                  />
-                </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="date">Date *</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={newRequest.date}
+                  onChange={(e) => setNewRequest(prev => ({ ...prev, date: e.target.value }))}
+                />
               </div>
 
               <div className="space-y-2">

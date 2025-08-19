@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Clock, BookOpen } from "lucide-react";
+import { Users, Clock, BookOpen, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,49 +102,6 @@ const FacultyDashboard = () => {
     <Layout title="Faculty Dashboard">
       <div className="mb-6 text-muted-foreground">Welcome back, {user.name}!</div>
       <div className="space-y-6">
-          {/* Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Classes</CardTitle>
-                <BookOpen className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{classesData.length}</div>
-                <p className="text-xs text-muted-foreground">
-                  Across all years
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Students on OD Today</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{totalODStudents}</div>
-                <p className="text-xs text-muted-foreground">
-                  Currently on duty
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Classes</CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {classesData.filter(c => c.students.length > 0).length}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  With students on OD
-                </p>
-              </CardContent>
-            </Card>
-          </div>
 
           {/* Class Selection */}
           <Card>
@@ -214,17 +171,37 @@ const FacultyDashboard = () => {
                             </div>
                             
                             <div className="flex flex-col md:flex-row md:items-center gap-4">
-                              <div className="space-y-1">
-                                <p className="text-sm font-medium text-foreground">{student.event_name}</p>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Clock className="w-4 h-4" />
-                                  <span>{getPeriodText(student.from_period, student.to_period)}</span>
-                                </div>
-                              </div>
-                              
-                              <Badge variant="outline" className="w-fit">
-                                On Duty
-                              </Badge>
+                                 <div className="space-y-1">
+                                 <p className="text-sm font-medium text-foreground">{student.event_name}</p>
+                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                   <Clock className="w-4 h-4" />
+                                   <span>{getPeriodText(student.from_period, student.to_period)}</span>
+                                 </div>
+                               </div>
+                               
+                               <div className="flex items-center gap-2">
+                                 <Badge variant="outline" className="w-fit">
+                                   On Duty
+                                 </Badge>
+                                 <div className="flex gap-1">
+                                   {student.supporting_document_url && (
+                                     <Button
+                                       variant="outline"
+                                       size="sm"
+                                       onClick={() => window.open(`${supabase.storage.from('od-documents').getPublicUrl(student.supporting_document_url!).data.publicUrl}`, '_blank')}
+                                     >
+                                       <FileText className="w-4 h-4" />
+                                     </Button>
+                                   )}
+                                   <Button
+                                     variant="outline"
+                                     size="sm"
+                                     onClick={() => window.open(`${supabase.storage.from('od-documents').getPublicUrl(student.proof_document_url).data.publicUrl}`, '_blank')}
+                                   >
+                                     <FileText className="w-4 h-4" />
+                                   </Button>
+                                 </div>
+                               </div>
                             </div>
                           </div>
                         </CardContent>
@@ -260,15 +237,14 @@ const FacultyDashboard = () => {
                     >
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="font-medium text-foreground">{classData.className}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {classData.students.length === 0 
-                                ? "All present" 
-                                : `${classData.students.length} on OD`
-                              }
-                            </p>
-                          </div>
+                           <div>
+                             <h4 className="font-medium text-foreground">{classData.className}</h4>
+                             {classData.students.length > 0 && (
+                               <p className="text-sm text-muted-foreground">
+                                 {classData.students.length} on OD
+                               </p>
+                             )}
+                           </div>
                           {classData.students.length > 0 && (
                             <Badge variant="warning">
                               {classData.students.length}

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, Clock, User, CheckCircle, XCircle } from "lucide-react";
+import { Calendar, Clock, User, CheckCircle, XCircle, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -249,6 +249,38 @@ const HODDashboard = () => {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">Reason for OD</label>
                   <p className="text-sm bg-muted p-3 rounded-md min-h-[80px]">{selectedRequest.reason}</p>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-foreground">Documents</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedRequest.supporting_document_url && (
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium text-muted-foreground">Supporting Document</label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start"
+                          onClick={() => window.open(`${supabase.storage.from('od-documents').getPublicUrl(selectedRequest.supporting_document_url!).data.publicUrl}`, '_blank')}
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          View Document
+                        </Button>
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-muted-foreground">Proof Document</label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start"
+                        onClick={() => window.open(`${supabase.storage.from('od-documents').getPublicUrl(selectedRequest.proof_document_url).data.publicUrl}`, '_blank')}
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        View Document
+                      </Button>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-4">
