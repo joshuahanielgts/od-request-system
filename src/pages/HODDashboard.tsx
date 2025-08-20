@@ -282,9 +282,21 @@ const HODDashboard = () => {
                           variant="outline"
                           size="sm"
                           className="w-full justify-start"
-                          onClick={() => {
-                            const { data: urlData } = supabase.storage.from('od-documents').getPublicUrl(selectedRequest.supporting_document_url!);
-                            window.open(urlData.publicUrl, '_blank');
+                          onClick={async () => {
+                            try {
+                              const { data, error } = await supabase.storage
+                                .from('od-documents')
+                                .createSignedUrl(selectedRequest.supporting_document_url!, 3600);
+                              
+                              if (error) throw error;
+                              window.open(data.signedUrl, '_blank');
+                            } catch (error) {
+                              toast({
+                                title: "Error",
+                                description: "Failed to access document",
+                                variant: "destructive"
+                              });
+                            }
                           }}
                         >
                           <FileText className="w-4 h-4 mr-2" />
@@ -298,9 +310,21 @@ const HODDashboard = () => {
                         variant="outline"
                         size="sm"
                         className="w-full justify-start"
-                        onClick={() => {
-                          const { data: urlData } = supabase.storage.from('od-documents').getPublicUrl(selectedRequest.proof_document_url);
-                          window.open(urlData.publicUrl, '_blank');
+                        onClick={async () => {
+                          try {
+                            const { data, error } = await supabase.storage
+                              .from('od-documents')
+                              .createSignedUrl(selectedRequest.proof_document_url, 3600);
+                            
+                            if (error) throw error;
+                            window.open(data.signedUrl, '_blank');
+                          } catch (error) {
+                            toast({
+                              title: "Error",
+                              description: "Failed to access document",
+                              variant: "destructive"
+                            });
+                          }
                         }}
                       >
                         <FileText className="w-4 h-4 mr-2" />

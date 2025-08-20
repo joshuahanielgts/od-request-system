@@ -1,13 +1,22 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
-interface User {
+interface Profile {
+  registration_number: string;
   role: 'student' | 'hod' | 'faculty';
+  department?: string;
+  section?: string;
+}
+
+interface User extends Profile {
+  id: string;
+  email: string;
   name: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  selectRole: (role: 'student' | 'hod' | 'faculty') => void;
   logout: () => void;
   loading: boolean;
 }
@@ -31,13 +40,59 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user role is already selected (from localStorage)
-    const storedUser = localStorage.getItem('od_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        fetchUserProfile(session.user);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        await fetchUserProfile(session.user);
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const fetchUserProfile = async (authUser: SupabaseUser) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        setLoading(false);
+        return;
+      }
+
+      if (profile) {
+        setUser({
+          id: authUser.id,
+          email: authUser.email || '',
+          name: getRoleName(profile.role as 'student' | 'hod' | 'faculty'),
+          registration_number: profile.registration_number || '',
+          role: profile.role as 'student' | 'hod' | 'faculty',
+          department: profile.department || undefined,
+          section: profile.section || undefined,
+        });
+      }
+    } catch (error) {
+      console.error('Error in fetchUserProfile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getRoleName = (role: 'student' | 'hod' | 'faculty'): string => {
     switch (role) {
@@ -48,23 +103,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const selectRole = (role: 'student' | 'hod' | 'faculty'): void => {
-    const userData: User = {
-      role,
-      name: getRoleName(role)
-    };
-
-    setUser(userData);
-    localStorage.setItem('od_user', JSON.stringify(userData));
-  };
-
-  const logout = (): void => {
+  const logout = async (): Promise<void> => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('od_user');
   };
 
   return (
-    <AuthContext.Provider value={{ user, selectRole, logout, loading }}>
+    <AuthContext.Provider value={{ user, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

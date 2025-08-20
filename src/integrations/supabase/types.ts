@@ -21,11 +21,13 @@ export type Database = {
           event_name: string
           from_period: number
           id: string
+          owner_id: string | null
           proof_document_url: string
           reason: string
           status: string
           student_department: string
           student_id: string
+          student_ids_array: string[] | null
           student_name: string
           student_section: string
           student_year: string
@@ -39,11 +41,13 @@ export type Database = {
           event_name: string
           from_period: number
           id?: string
+          owner_id?: string | null
           proof_document_url: string
           reason: string
           status?: string
           student_department?: string
           student_id: string
+          student_ids_array?: string[] | null
           student_name: string
           student_section?: string
           student_year?: string
@@ -57,11 +61,13 @@ export type Database = {
           event_name?: string
           from_period?: number
           id?: string
+          owner_id?: string | null
           proof_document_url?: string
           reason?: string
           status?: string
           student_department?: string
           student_id?: string
+          student_ids_array?: string[] | null
           student_name?: string
           student_section?: string
           student_year?: string
@@ -71,12 +77,49 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          department: string | null
+          registration_number: string | null
+          role: string
+          section: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          registration_number?: string | null
+          role?: string
+          section?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          registration_number?: string | null
+          role?: string
+          section?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      current_registration_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      has_profile_role: {
+        Args: { _role: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
