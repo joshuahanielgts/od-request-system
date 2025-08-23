@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Home } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 interface LayoutProps {
   children: ReactNode;
@@ -9,11 +9,10 @@ interface LayoutProps {
 }
 
 const Layout = ({ children, title }: LayoutProps) => {
-  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleBackToHome = () => {
-    logout();
-    window.location.href = '/';
+    navigate('/');
   };
 
   return (
@@ -33,23 +32,15 @@ const Layout = ({ children, title }: LayoutProps) => {
               </div>
             </div>
             
-            {user && (
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <p className="font-medium text-foreground">{user.name}</p>
-                  <p className="text-sm text-muted-foreground capitalize">{user.role}</p>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleBackToHome}
-                  className="gap-2"
-                >
-                  <Home className="h-4 w-4" />
-                  Home
-                </Button>
-              </div>
-            )}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleBackToHome}
+              className="gap-2"
+            >
+              <Home className="h-4 w-4" />
+              Home
+            </Button>
           </div>
         </div>
       </header>

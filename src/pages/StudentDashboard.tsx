@@ -9,8 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, Clock, FileText, Plus, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout";
 
@@ -50,21 +48,10 @@ const StudentDashboard = () => {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const { user } = useAuth();
 
-  // Redirect if not authenticated or not a student
   useEffect(() => {
-    if (!user) {
-      navigate('/');
-      return;
-    }
-    if (user.role !== 'student') {
-      navigate('/');
-      return;
-    }
     fetchRequests();
-  }, [user, navigate]);
+  }, []);
 
   const fetchRequests = async () => {
     try {
@@ -221,14 +208,10 @@ const StudentDashboard = () => {
     return `${getOrdinal(from)} to ${getOrdinal(to)} period`;
   };
 
-  if (!user) {
-    return null; // Will redirect
-  }
-
   return (
     <Layout title="Student Dashboard">
       <div className="flex justify-between items-center mb-6">
-        <div className="text-muted-foreground">Welcome back, {user.name}!</div>
+        <div className="text-muted-foreground">Welcome to the Student Portal!</div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2">

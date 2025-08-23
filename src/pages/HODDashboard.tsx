@@ -7,8 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar, Clock, User, CheckCircle, XCircle, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout";
 
@@ -38,21 +36,10 @@ const HODDashboard = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const { user } = useAuth();
 
-  // Redirect if not authenticated or not HOD
   useEffect(() => {
-    if (!user) {
-      navigate('/');
-      return;
-    }
-    if (user.role !== 'hod') {
-      navigate('/');
-      return;
-    }
     fetchRequests();
-  }, [user, navigate]);
+  }, []);
 
   const fetchRequests = async (date?: string) => {
     try {
@@ -140,10 +127,6 @@ const HODDashboard = () => {
     return `${getOrdinal(from)} to ${getOrdinal(to)} period`;
   };
 
-  if (!user) {
-    return null; // Will redirect
-  }
-
   return (
     <Layout title="HOD Dashboard">
       <div className="space-y-6">
@@ -152,7 +135,7 @@ const HODDashboard = () => {
             <h2 className="text-xl font-semibold text-foreground">
               {selectedDate ? `Requests for ${new Date(selectedDate).toLocaleDateString()}` : `Pending Approvals`} ({filteredRequests.length})
             </h2>
-            <p className="text-muted-foreground">Welcome back, {user.name}!</p>
+            <p className="text-muted-foreground">Welcome to the HOD Portal!</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="space-y-2">

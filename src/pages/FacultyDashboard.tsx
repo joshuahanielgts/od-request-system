@@ -6,8 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Users, Clock, BookOpen, FileText } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout";
 
@@ -40,21 +38,10 @@ const FacultyDashboard = () => {
   const [approvedRequests, setApprovedRequests] = useState<ODRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>("");
-  const navigate = useNavigate();
-  const { user } = useAuth();
 
-  // Redirect if not authenticated or not faculty
   useEffect(() => {
-    if (!user) {
-      navigate('/');
-      return;
-    }
-    if (user.role !== 'faculty') {
-      navigate('/');
-      return;
-    }
     fetchApprovedRequests();
-  }, [user, navigate]);
+  }, []);
 
   const fetchApprovedRequests = async (date?: string) => {
     try {
@@ -119,13 +106,9 @@ const FacultyDashboard = () => {
   const selectedClassData = classesData.find(c => c.className === selectedClass);
   const totalODStudents = classesData.reduce((sum, cls) => sum + cls.students.length, 0);
 
-  if (!user) {
-    return null; // Will redirect
-  }
-
   return (
     <Layout title="Faculty Dashboard">
-      <div className="mb-6 text-muted-foreground">Welcome back, {user.name}!</div>
+      <div className="mb-6 text-muted-foreground">Welcome to the Faculty Portal!</div>
       <div className="space-y-6">
         {/* Date Filter */}
         <Card>
