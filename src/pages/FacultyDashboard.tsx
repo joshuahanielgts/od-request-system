@@ -91,16 +91,23 @@ const FacultyDashboard = () => {
   };
 
   const getPeriodText = (from: number, to: number) => {
+    const periods = [
+      { num: 1, time: "9:00 - 9:50" },
+      { num: 2, time: "9:50 - 10:40" },
+      { num: 3, time: "11:00 - 11:50" },
+      { num: 4, time: "11:50 - 12:40" },
+      { num: 5, time: "1:30 - 2:20" },
+      { num: 6, time: "2:20 - 3:10" },
+      { num: 7, time: "3:30 - 4:20" }
+    ];
+    
+    const fromPeriod = periods.find(p => p.num === from);
+    const toPeriod = periods.find(p => p.num === to);
+    
     if (from === to) {
-      return `${from}${getOrdinalSuffix(from)} period`;
+      return `Period ${from} (${fromPeriod?.time})`;
     }
-    return `${from}${getOrdinalSuffix(from)} to ${to}${getOrdinalSuffix(to)} period`;
-  };
-
-  const getOrdinalSuffix = (num: number) => {
-    const suffixes = ["th", "st", "nd", "rd"];
-    const v = num % 100;
-    return suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0];
+    return `Period ${from} to ${to} (${fromPeriod?.time} - ${toPeriod?.time?.split(' - ')[1]})`;
   };
 
   const selectedClassData = classesData.find(c => c.className === selectedClass);
@@ -174,7 +181,7 @@ const FacultyDashboard = () => {
                   <div className="text-center py-8 text-muted-foreground">
                     <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <h3 className="text-lg font-medium mb-2">No students on OD</h3>
-                    <p>All students in {selectedClass} are present today.</p>
+                    <p>No students in {selectedClass} are on OD today.</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -276,7 +283,7 @@ const FacultyDashboard = () => {
                     <div className="col-span-full text-center py-8 text-muted-foreground">
                       <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
                       <h3 className="text-lg font-medium mb-2">No students on OD</h3>
-                      <p>{selectedDate ? 'No students were on OD on the selected date.' : 'All students are present today.'}</p>
+                      <p>{selectedDate ? 'No students were on OD on the selected date.' : 'No students are on OD today.'}</p>
                     </div>
                   )}
                 </div>

@@ -196,16 +196,23 @@ const StudentDashboard = () => {
   const { pending, approved, rejected } = categorizeRequests();
 
   const getPeriodText = (from: number, to: number) => {
-    const getOrdinal = (n: number) => {
-      const suffixes = ["th", "st", "nd", "rd"];
-      const v = n % 100;
-      return n + (suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0]);
-    };
+    const periods = [
+      { num: 1, time: "9:00 - 9:50" },
+      { num: 2, time: "9:50 - 10:40" },
+      { num: 3, time: "11:00 - 11:50" },
+      { num: 4, time: "11:50 - 12:40" },
+      { num: 5, time: "1:30 - 2:20" },
+      { num: 6, time: "2:20 - 3:10" },
+      { num: 7, time: "3:30 - 4:20" }
+    ];
+    
+    const fromPeriod = periods.find(p => p.num === from);
+    const toPeriod = periods.find(p => p.num === to);
     
     if (from === to) {
-      return `${getOrdinal(from)} period`;
+      return `Period ${from} (${fromPeriod?.time})`;
     }
-    return `${getOrdinal(from)} to ${getOrdinal(to)} period`;
+    return `Period ${from} to ${to} (${fromPeriod?.time} - ${toPeriod?.time?.split(' - ')[1]})`;
   };
 
   return (
@@ -387,76 +394,36 @@ const StudentDashboard = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="fromPeriod">From Period *</Label>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setNewRequest(prev => ({ ...prev, fromPeriod: "1" }))}
-                      >
-                        1st Period
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setNewRequest(prev => ({ ...prev, fromPeriod: "2" }))}
-                      >
-                        2nd Period
-                      </Button>
-                    </div>
-                  </div>
+                  <Label htmlFor="fromPeriod">From Period *</Label>
                   <Select value={newRequest.fromPeriod} onValueChange={(value) => setNewRequest(prev => ({ ...prev, fromPeriod: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select from period" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">1st Period</SelectItem>
-                      <SelectItem value="2">2nd Period</SelectItem>
-                      <SelectItem value="3">3rd Period</SelectItem>
-                      <SelectItem value="4">4th Period</SelectItem>
-                      <SelectItem value="5">5th Period</SelectItem>
-                      <SelectItem value="6">6th Period</SelectItem>
-                      <SelectItem value="7">7th Period</SelectItem>
+                      <SelectItem value="1">Period 1 (9:00 - 9:50)</SelectItem>
+                      <SelectItem value="2">Period 2 (9:50 - 10:40)</SelectItem>
+                      <SelectItem value="3">Period 3 (11:00 - 11:50)</SelectItem>
+                      <SelectItem value="4">Period 4 (11:50 - 12:40)</SelectItem>
+                      <SelectItem value="5">Period 5 (1:30 - 2:20)</SelectItem>
+                      <SelectItem value="6">Period 6 (2:20 - 3:10)</SelectItem>
+                      <SelectItem value="7">Period 7 (3:30 - 4:20)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="toPeriod">To Period *</Label>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setNewRequest(prev => ({ ...prev, toPeriod: "5" }))}
-                      >
-                        5th Period
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setNewRequest(prev => ({ ...prev, toPeriod: "7" }))}
-                      >
-                        7th Period
-                      </Button>
-                    </div>
-                  </div>
+                  <Label htmlFor="toPeriod">To Period *</Label>
                   <Select value={newRequest.toPeriod} onValueChange={(value) => setNewRequest(prev => ({ ...prev, toPeriod: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select to period" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">1st Period</SelectItem>
-                      <SelectItem value="2">2nd Period</SelectItem>
-                      <SelectItem value="3">3rd Period</SelectItem>
-                      <SelectItem value="4">4th Period</SelectItem>
-                      <SelectItem value="5">5th Period</SelectItem>
-                      <SelectItem value="6">6th Period</SelectItem>
-                      <SelectItem value="7">7th Period</SelectItem>
+                      <SelectItem value="1">Period 1 (9:00 - 9:50)</SelectItem>
+                      <SelectItem value="2">Period 2 (9:50 - 10:40)</SelectItem>
+                      <SelectItem value="3">Period 3 (11:00 - 11:50)</SelectItem>
+                      <SelectItem value="4">Period 4 (11:50 - 12:40)</SelectItem>
+                      <SelectItem value="5">Period 5 (1:30 - 2:20)</SelectItem>
+                      <SelectItem value="6">Period 6 (2:20 - 3:10)</SelectItem>
+                      <SelectItem value="7">Period 7 (3:30 - 4:20)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -115,16 +115,23 @@ const HODDashboard = () => {
   const filteredRequests = selectedDate ? requests : requests.filter(r => r.status === "pending");
 
   const getPeriodText = (from: number, to: number) => {
-    const getOrdinal = (n: number) => {
-      const suffixes = ["th", "st", "nd", "rd"];
-      const v = n % 100;
-      return n + (suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0]);
-    };
+    const periods = [
+      { num: 1, time: "9:00 - 9:50" },
+      { num: 2, time: "9:50 - 10:40" },
+      { num: 3, time: "11:00 - 11:50" },
+      { num: 4, time: "11:50 - 12:40" },
+      { num: 5, time: "1:30 - 2:20" },
+      { num: 6, time: "2:20 - 3:10" },
+      { num: 7, time: "3:30 - 4:20" }
+    ];
+    
+    const fromPeriod = periods.find(p => p.num === from);
+    const toPeriod = periods.find(p => p.num === to);
     
     if (from === to) {
-      return `${getOrdinal(from)} period`;
+      return `Period ${from} (${fromPeriod?.time})`;
     }
-    return `${getOrdinal(from)} to ${getOrdinal(to)} period`;
+    return `Period ${from} to ${to} (${fromPeriod?.time} - ${toPeriod?.time?.split(' - ')[1]})`;
   };
 
   return (
