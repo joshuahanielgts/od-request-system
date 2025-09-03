@@ -115,23 +115,10 @@ const HODDashboard = () => {
   const filteredRequests = selectedDate ? requests : requests.filter(r => r.status === "pending");
 
   const getPeriodText = (from: number, to: number) => {
-    const periods = [
-      { num: 1, time: "9:00 - 9:50" },
-      { num: 2, time: "9:50 - 10:40" },
-      { num: 3, time: "11:00 - 11:50" },
-      { num: 4, time: "11:50 - 12:40" },
-      { num: 5, time: "1:30 - 2:20" },
-      { num: 6, time: "2:20 - 3:10" },
-      { num: 7, time: "3:30 - 4:20" }
-    ];
-    
-    const fromPeriod = periods.find(p => p.num === from);
-    const toPeriod = periods.find(p => p.num === to);
-    
     if (from === to) {
-      return `Period ${from} (${fromPeriod?.time})`;
+      return `Period ${from}`;
     }
-    return `Period ${from} to ${to} (${fromPeriod?.time} - ${toPeriod?.time?.split(' - ')[1]})`;
+    return `Period ${from} to ${to}`;
   };
 
   return (

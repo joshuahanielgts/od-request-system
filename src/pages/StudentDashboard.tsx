@@ -43,7 +43,7 @@ const StudentDashboard = () => {
     reason: "",
     supportingDocument: null as File | null,
     proofDocument: null as File | null,
-    students: [{ studentName: "", registrationNumber: "", year: "", department: "", section: "" }]
+    students: [{ studentName: "", registrationNumber: "", year: "", department: "CSE", section: "" }]
   });
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -88,7 +88,7 @@ const StudentDashboard = () => {
     
     // Validate students
     for (const student of newRequest.students) {
-      if (!student.studentName || !student.registrationNumber || !student.year || !student.department || !student.section) {
+      if (!student.studentName || !student.registrationNumber || !student.year || !student.section) {
         toast({
           title: "Missing Information",
           description: "Please fill in all student details",
@@ -133,8 +133,8 @@ const StudentDashboard = () => {
         .insert({
           student_name: allStudents.map(s => s.name).join(', '),
           student_id: allStudents.map(s => s.registrationNumber).join(', '),
-          student_year: allStudents[0].year, // Use first student's details for grouping
-          student_department: allStudents[0].department,
+          student_year: allStudents[0].year,
+          student_department: "CSE",
           student_section: allStudents[0].section,
           event_name: newRequest.eventName,
           date: newRequest.date,
@@ -161,7 +161,7 @@ const StudentDashboard = () => {
         reason: "",
         supportingDocument: null,
         proofDocument: null,
-        students: [{ studentName: "", registrationNumber: "", year: "", department: "", section: "" }]
+        students: [{ studentName: "", registrationNumber: "", year: "", department: "CSE", section: "" }]
       });
       
       setDialogOpen(false);
@@ -196,23 +196,10 @@ const StudentDashboard = () => {
   const { pending, approved, rejected } = categorizeRequests();
 
   const getPeriodText = (from: number, to: number) => {
-    const periods = [
-      { num: 1, time: "9:00 - 9:50" },
-      { num: 2, time: "9:50 - 10:40" },
-      { num: 3, time: "11:00 - 11:50" },
-      { num: 4, time: "11:50 - 12:40" },
-      { num: 5, time: "1:30 - 2:20" },
-      { num: 6, time: "2:20 - 3:10" },
-      { num: 7, time: "3:30 - 4:20" }
-    ];
-    
-    const fromPeriod = periods.find(p => p.num === from);
-    const toPeriod = periods.find(p => p.num === to);
-    
     if (from === to) {
-      return `Period ${from} (${fromPeriod?.time})`;
+      return `Period ${from}`;
     }
-    return `Period ${from} to ${to} (${fromPeriod?.time} - ${toPeriod?.time?.split(' - ')[1]})`;
+    return `Period ${from} to ${to}`;
   };
 
   return (
@@ -244,7 +231,7 @@ const StudentDashboard = () => {
                     size="sm"
                     onClick={() => setNewRequest(prev => ({
                       ...prev,
-                      students: [...prev.students, { studentName: "", registrationNumber: "", year: "", department: "", section: "" }]
+                      students: [...prev.students, { studentName: "", registrationNumber: "", year: "", department: "CSE", section: "" }]
                     }))}
                   >
                     <Plus className="w-4 h-4 mr-2" />
@@ -297,7 +284,7 @@ const StudentDashboard = () => {
                           }))}
                         />
                       </div>
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Year *</Label>
                           <Select 
@@ -305,7 +292,7 @@ const StudentDashboard = () => {
                             onValueChange={(value) => setNewRequest(prev => ({
                               ...prev,
                               students: prev.students.map((s, i) => 
-                                i === index ? { ...s, year: value } : s
+                                i === index ? { ...s, year: value, department: "CSE" } : s
                               )
                             }))}
                           >
@@ -317,30 +304,6 @@ const StudentDashboard = () => {
                               <SelectItem value="2nd Year">2nd Year</SelectItem>
                               <SelectItem value="3rd Year">3rd Year</SelectItem>
                               <SelectItem value="4th Year">4th Year</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Department *</Label>
-                          <Select 
-                            value={student.department} 
-                            onValueChange={(value) => setNewRequest(prev => ({
-                              ...prev,
-                              students: prev.students.map((s, i) => 
-                                i === index ? { ...s, department: value } : s
-                              )
-                            }))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Dept" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="CSE">CSE</SelectItem>
-                              <SelectItem value="ECE">ECE</SelectItem>
-                              <SelectItem value="EEE">EEE</SelectItem>
-                              <SelectItem value="MECH">MECH</SelectItem>
-                              <SelectItem value="CIVIL">CIVIL</SelectItem>
-                              <SelectItem value="IT">IT</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -361,8 +324,6 @@ const StudentDashboard = () => {
                             <SelectContent>
                               <SelectItem value="A">A</SelectItem>
                               <SelectItem value="B">B</SelectItem>
-                              <SelectItem value="C">C</SelectItem>
-                              <SelectItem value="D">D</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -392,7 +353,7 @@ const StudentDashboard = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="fromPeriod">From Period *</Label>
                   <Select value={newRequest.fromPeriod} onValueChange={(value) => setNewRequest(prev => ({ ...prev, fromPeriod: value }))}>
@@ -400,13 +361,13 @@ const StudentDashboard = () => {
                       <SelectValue placeholder="Select from period" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">Period 1 (9:00 - 9:50)</SelectItem>
-                      <SelectItem value="2">Period 2 (9:50 - 10:40)</SelectItem>
-                      <SelectItem value="3">Period 3 (11:00 - 11:50)</SelectItem>
-                      <SelectItem value="4">Period 4 (11:50 - 12:40)</SelectItem>
-                      <SelectItem value="5">Period 5 (1:30 - 2:20)</SelectItem>
-                      <SelectItem value="6">Period 6 (2:20 - 3:10)</SelectItem>
-                      <SelectItem value="7">Period 7 (3:30 - 4:20)</SelectItem>
+                      <SelectItem value="1">Period 1</SelectItem>
+                      <SelectItem value="2">Period 2</SelectItem>
+                      <SelectItem value="3">Period 3</SelectItem>
+                      <SelectItem value="4">Period 4</SelectItem>
+                      <SelectItem value="5">Period 5</SelectItem>
+                      <SelectItem value="6">Period 6</SelectItem>
+                      <SelectItem value="7">Period 7</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -417,13 +378,13 @@ const StudentDashboard = () => {
                       <SelectValue placeholder="Select to period" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">Period 1 (9:00 - 9:50)</SelectItem>
-                      <SelectItem value="2">Period 2 (9:50 - 10:40)</SelectItem>
-                      <SelectItem value="3">Period 3 (11:00 - 11:50)</SelectItem>
-                      <SelectItem value="4">Period 4 (11:50 - 12:40)</SelectItem>
-                      <SelectItem value="5">Period 5 (1:30 - 2:20)</SelectItem>
-                      <SelectItem value="6">Period 6 (2:20 - 3:10)</SelectItem>
-                      <SelectItem value="7">Period 7 (3:30 - 4:20)</SelectItem>
+                      <SelectItem value="1">Period 1</SelectItem>
+                      <SelectItem value="2">Period 2</SelectItem>
+                      <SelectItem value="3">Period 3</SelectItem>
+                      <SelectItem value="4">Period 4</SelectItem>
+                      <SelectItem value="5">Period 5</SelectItem>
+                      <SelectItem value="6">Period 6</SelectItem>
+                      <SelectItem value="7">Period 7</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

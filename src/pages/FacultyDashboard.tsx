@@ -91,23 +91,10 @@ const FacultyDashboard = () => {
   };
 
   const getPeriodText = (from: number, to: number) => {
-    const periods = [
-      { num: 1, time: "9:00 - 9:50" },
-      { num: 2, time: "9:50 - 10:40" },
-      { num: 3, time: "11:00 - 11:50" },
-      { num: 4, time: "11:50 - 12:40" },
-      { num: 5, time: "1:30 - 2:20" },
-      { num: 6, time: "2:20 - 3:10" },
-      { num: 7, time: "3:30 - 4:20" }
-    ];
-    
-    const fromPeriod = periods.find(p => p.num === from);
-    const toPeriod = periods.find(p => p.num === to);
-    
     if (from === to) {
-      return `Period ${from} (${fromPeriod?.time})`;
+      return `Period ${from}`;
     }
-    return `Period ${from} to ${to} (${fromPeriod?.time} - ${toPeriod?.time?.split(' - ')[1]})`;
+    return `Period ${from} to ${to}`;
   };
 
   const selectedClassData = classesData.find(c => c.className === selectedClass);
@@ -208,30 +195,48 @@ const FacultyDashboard = () => {
                                  <Badge variant="outline" className="w-fit">
                                    On Duty
                                  </Badge>
-                                  <div className="flex gap-1">
-                                    {student.supporting_document_url && (
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                          const { data: urlData } = supabase.storage.from('od-documents').getPublicUrl(student.supporting_document_url!);
-                                          window.open(urlData.publicUrl, '_blank');
-                                        }}
-                                      >
-                                        <FileText className="w-4 h-4" />
-                                      </Button>
-                                    )}
+                                <div className="flex gap-1">
+                                  {student.supporting_document_url && (
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => {
-                                        const { data: urlData } = supabase.storage.from('od-documents').getPublicUrl(student.proof_document_url);
-                                        window.open(urlData.publicUrl, '_blank');
+                                      onClick={async () => {
+                                        try {
+                                          const { data, error } = await supabase.storage
+                                            .from('od-documents')
+                                            .createSignedUrl(student.supporting_document_url!, 3600);
+                                          
+                                          if (error) throw error;
+                                          window.open(data.signedUrl, '_blank');
+                                        } catch (error) {
+                                          console.error('Failed to access supporting document:', error);
+                                        }
                                       }}
                                     >
-                                      <FileText className="w-4 h-4" />
+                                      <FileText className="w-4 h-4 mr-1" />
+                                      Support Doc
                                     </Button>
-                                  </div>
+                                  )}
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={async () => {
+                                      try {
+                                        const { data, error } = await supabase.storage
+                                          .from('od-documents')
+                                          .createSignedUrl(student.proof_document_url, 3600);
+                                        
+                                        if (error) throw error;
+                                        window.open(data.signedUrl, '_blank');
+                                      } catch (error) {
+                                        console.error('Failed to access proof document:', error);
+                                      }
+                                    }}
+                                  >
+                                    <FileText className="w-4 h-4 mr-1" />
+                                    Proof Doc
+                                  </Button>
+                                </div>
                                </div>
                             </div>
                           </div>
