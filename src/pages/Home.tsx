@@ -1,90 +1,88 @@
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraduationCap, UserCheck, Users } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import Layout from "@/components/Layout";
 
 const Home = () => {
   const navigate = useNavigate();
+  const { profile } = useAuth();
+
+  // Filter portals based on user role
+  const getAvailablePortals = () => {
+    const allPortals = [
+      {
+        title: "Student Portal",
+        description: "Submit and track your OD requests",
+        icon: GraduationCap,
+        path: "/student-dashboard",
+        role: "student"
+      },
+      {
+        title: "Faculty Portal", 
+        description: "Review and manage student requests",
+        icon: UserCheck,
+        path: "/faculty-dashboard",
+        role: "faculty"
+      },
+      {
+        title: "HOD Portal",
+        description: "Administrative oversight and approvals", 
+        icon: Users,
+        path: "/hod-dashboard",
+        role: "hod"
+      }
+    ];
+
+    if (!profile) return allPortals;
+    
+    // Show user's own portal plus admin portals if applicable
+    return allPortals.filter(portal => 
+      portal.role === profile.role || 
+      (profile.role === 'hod' && portal.role === 'faculty') ||
+      (profile.role === 'faculty' && portal.role === 'student')
+    );
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-4">
-      <div className="container mx-auto max-w-4xl">
-        <div className="text-center mb-12 pt-16">
-          <h1 className="text-4xl font-bold mb-4">OD Management System</h1>
-          <p className="text-xl text-muted-foreground">
-            Streamlined On-Duty request management for educational institutions
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/student-dashboard')}>
-            <CardHeader className="text-center">
-              <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-2">
-                <GraduationCap className="w-6 h-6 text-primary" />
-              </div>
-              <CardTitle>Student Portal</CardTitle>
-              <CardDescription>
-                Submit and track your OD requests
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full" onClick={(e) => {
-                e.stopPropagation();
-                navigate('/student-dashboard');
-              }}>
-                Access Student Portal
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/faculty-dashboard')}>
-            <CardHeader className="text-center">
-              <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-2">
-                <UserCheck className="w-6 h-6 text-primary" />
-              </div>
-              <CardTitle>Faculty Portal</CardTitle>
-              <CardDescription>
-                Review and manage student requests
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full" onClick={(e) => {
-                e.stopPropagation();
-                navigate('/faculty-dashboard');
-              }}>
-                Access Faculty Portal
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/hod-dashboard')}>
-            <CardHeader className="text-center">
-              <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-2">
-                <Users className="w-6 h-6 text-primary" />
-              </div>
-              <CardTitle>HOD Portal</CardTitle>
-              <CardDescription>
-                Administrative oversight and approval
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full" onClick={(e) => {
-                e.stopPropagation();
-                navigate('/hod-dashboard');
-              }}>
-                Access HOD Portal
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="text-center mt-12">
-          <p className="text-sm text-muted-foreground">
-            Select your portal to access the OD Management System
-          </p>
-        </div>
+    <Layout title="Dashboard">
+      <div className="text-center mb-16">
+        <h1 className="text-4xl font-bold text-foreground mb-4">
+          Welcome to OD Management System
+        </h1>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Streamline your Outward Duty request process with our comprehensive management platform
+        </p>
       </div>
-    </div>
+
+      <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        {getAvailablePortals().map((portal) => {
+          const IconComponent = portal.icon;
+          return (
+            <Card key={portal.path} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(portal.path)}>
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 p-3 bg-primary/10 rounded-full w-fit">
+                  <IconComponent className="h-8 w-8 text-primary" />
+                </div>
+                <CardTitle>{portal.title}</CardTitle>
+                <CardDescription>
+                  {portal.description}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full" onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(portal.path);
+                }}>
+                  Access Portal
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </Layout>
   );
 };
 

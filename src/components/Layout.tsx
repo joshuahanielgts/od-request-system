@@ -1,7 +1,8 @@
 import { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { Home } from 'lucide-react';
+import { Home, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 interface LayoutProps {
   children: ReactNode;
@@ -10,9 +11,15 @@ interface LayoutProps {
 
 const Layout = ({ children, title }: LayoutProps) => {
   const navigate = useNavigate();
+  const { signOut, profile } = useAuth();
 
   const handleBackToHome = () => {
     navigate('/');
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
   };
 
   return (
@@ -32,15 +39,31 @@ const Layout = ({ children, title }: LayoutProps) => {
               </div>
             </div>
             
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleBackToHome}
-              className="gap-2"
-            >
-              <Home className="h-4 w-4" />
-              Home
-            </Button>
+            <div className="flex items-center gap-2">
+              {profile && (
+                <span className="text-sm text-muted-foreground mr-4">
+                  Welcome, {profile.full_name} ({profile.role.toUpperCase()})
+                </span>
+              )}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleBackToHome}
+                className="gap-2"
+              >
+                <Home className="h-4 w-4" />
+                Home
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSignOut}
+                className="gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
       </header>
