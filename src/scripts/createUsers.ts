@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const users = [
   {
-    email: 'jj9568@srmist.edu.in',
+    email: 'jj9568@odms.local',
     password: 'jj9568',
     userData: {
       role: 'student',

@@ -92,8 +92,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signIn = async (username: string, password: string) => {
+    // Convert username to email format for Supabase
+    const email = username.includes('@') ? username : `${username}@odms.local`;
+    
     const { error } = await supabase.auth.signInWithPassword({
-      email: username, // Supabase uses email field but we treat it as username
+      email,
       password,
     });
 
@@ -115,9 +118,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signUp = async (username: string, password: string, userData: { role: string; full_name: string; registration_number?: string }) => {
     const redirectUrl = `${window.location.origin}/`;
+    // Convert username to email format for Supabase
+    const email = username.includes('@') ? username : `${username}@odms.local`;
     
     const { error } = await supabase.auth.signUp({
-      email: username, // Supabase uses email field but we treat it as username
+      email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
