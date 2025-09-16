@@ -20,12 +20,12 @@ const Auth = () => {
   }
 
   const [signInData, setSignInData] = useState({
-    email: '',
+    username: '',
     password: '',
   });
 
   const [signUpData, setSignUpData] = useState({
-    email: '',
+    username: '',
     password: '',
     confirmPassword: '',
     role: '',
@@ -37,7 +37,7 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    const { error } = await signIn(signInData.email, signInData.password);
+    const { error } = await signIn(signInData.username, signInData.password);
     
     if (!error) {
       navigate('/');
@@ -61,7 +61,7 @@ const Auth = () => {
 
     setIsLoading(true);
     
-    const { error } = await signUp(signUpData.email, signUpData.password, {
+    const { error } = await signUp(signUpData.username, signUpData.password, {
       role: signUpData.role,
       full_name: signUpData.fullName,
       registration_number: signUpData.registrationNumber || undefined,
@@ -102,12 +102,12 @@ const Auth = () => {
               <TabsContent value="signin">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
+                    <Label htmlFor="signin-username">Username</Label>
                     <Input
-                      id="signin-email"
-                      type="email"
-                      value={signInData.email}
-                      onChange={(e) => setSignInData(prev => ({ ...prev, email: e.target.value }))}
+                      id="signin-username"
+                      type="text"
+                      value={signInData.username}
+                      onChange={(e) => setSignInData(prev => ({ ...prev, username: e.target.value }))}
                       required
                     />
                   </div>
@@ -130,12 +130,12 @@ const Auth = () => {
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
+                    <Label htmlFor="signup-username">Username</Label>
                     <Input
-                      id="signup-email"
-                      type="email"
-                      value={signUpData.email}
-                      onChange={(e) => setSignUpData(prev => ({ ...prev, email: e.target.value }))}
+                      id="signup-username"
+                      type="text"
+                      value={signUpData.username}
+                      onChange={(e) => setSignUpData(prev => ({ ...prev, username: e.target.value }))}
                       required
                     />
                   </div>

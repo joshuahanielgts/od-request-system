@@ -16,8 +16,8 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
-  signUp: (email: string, password: string, userData: { role: string; full_name: string; registration_number?: string }) => Promise<{ error: AuthError | null }>;
+  signIn: (username: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUp: (username: string, password: string, userData: { role: string; full_name: string; registration_number?: string }) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -91,9 +91,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (username: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: username, // Supabase uses email field but we treat it as username
       password,
     });
 
@@ -113,11 +113,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error };
   };
 
-  const signUp = async (email: string, password: string, userData: { role: string; full_name: string; registration_number?: string }) => {
+  const signUp = async (username: string, password: string, userData: { role: string; full_name: string; registration_number?: string }) => {
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
-      email,
+      email: username, // Supabase uses email field but we treat it as username
       password,
       options: {
         emailRedirectTo: redirectUrl,
