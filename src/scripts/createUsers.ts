@@ -62,4 +62,14 @@ export const createTestUsers = async () => {
 
 // To use this script, import and call createTestUsers() from the browser console
 // or temporarily add it to a component
-console.log('Test user creation script loaded. Call createTestUsers() to create users.');
+
+// Auto-create users when this script loads (for testing purposes)
+if (typeof window !== 'undefined') {
+  (window as any).createTestUsers = createTestUsers;
+  console.log('Test user creation script loaded. Call createTestUsers() to create users.');
+  
+  // Automatically create users if they don't exist
+  setTimeout(() => {
+    createTestUsers();
+  }, 1000);
+}
