@@ -17,7 +17,6 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   signIn: (username: string, password: string) => Promise<{ error: AuthError | null }>;
-  signUp: (username: string, password: string, userData: { role: string; full_name: string; registration_number?: string }) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -116,35 +115,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error };
   };
 
-  const signUp = async (username: string, password: string, userData: { role: string; full_name: string; registration_number?: string }) => {
-    const redirectUrl = `${window.location.origin}/`;
-    // Convert username to email format for Supabase
-    const email = username.includes('@') ? username : `${username}@odms.local`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: userData,
-      }
-    });
-
-    if (error) {
-      toast({
-        title: "Sign Up Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Account created successfully",
-      });
-    }
-
-    return { error };
-  };
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -169,7 +139,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     profile,
     loading,
     signIn,
-    signUp,
     signOut,
   };
 

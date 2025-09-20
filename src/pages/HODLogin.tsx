@@ -19,7 +19,7 @@ const HODLogin = () => {
       if (profile.role === 'hod') {
         navigate('/hod-dashboard');
       } else {
-        navigate('/');
+        navigate('/home');
       }
     }
   }, [user, profile, navigate]);

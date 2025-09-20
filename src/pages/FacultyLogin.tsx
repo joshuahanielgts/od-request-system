@@ -19,7 +19,7 @@ const FacultyLogin = () => {
       if (profile.role === 'faculty') {
         navigate('/faculty-dashboard');
       } else {
-        navigate('/');
+        navigate('/home');
       }
     }
   }, [user, profile, navigate]);

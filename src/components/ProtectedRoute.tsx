@@ -19,7 +19,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   }
 
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {

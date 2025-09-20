@@ -19,7 +19,7 @@ const StudentLogin = () => {
       if (profile.role === 'student') {
         navigate('/student-dashboard');
       } else {
-        navigate('/');
+        navigate('/home');
       }
     }
   }, [user, profile, navigate]);
