@@ -7,6 +7,10 @@ import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
+import LoginPortal from "./pages/LoginPortal";
+import StudentLogin from "./pages/StudentLogin";
+import FacultyLogin from "./pages/FacultyLogin";
+import HODLogin from "./pages/HODLogin";
 import StudentDashboard from "./pages/StudentDashboard";
 import HODDashboard from "./pages/HODDashboard";
 import FacultyDashboard from "./pages/FacultyDashboard";
@@ -23,7 +27,11 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
+            <Route path="/login" element={<LoginPortal />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/student-login" element={<StudentLogin />} />
+            <Route path="/faculty-login" element={<FacultyLogin />} />
+            <Route path="/hod-login" element={<HODLogin />} />
             <Route path="/" element={
               <ProtectedRoute>
                 <Home />
