@@ -31,18 +31,6 @@ const Layout = ({ children, title }: LayoutProps) => {
                 <p className="text-sm text-muted-foreground">SRM Institute of Science & Technology</p>
               </div>
             </div>
-            
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleBackToHome}
-                className="gap-2"
-              >
-                <Home className="h-4 w-4" />
-                Home
-              </Button>
-            </div>
           </div>
         </div>
       </header>
