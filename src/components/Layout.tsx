@@ -48,9 +48,6 @@ const Layout = ({ children, title }: LayoutProps) => {
       </header>
       
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-foreground">{title}</h2>
-        </div>
         {children}
       </main>
     </div>
