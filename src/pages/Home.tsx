@@ -2,48 +2,31 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraduationCap, UserCheck, Users } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
 import Layout from "@/components/Layout";
 
 const Home = () => {
   const navigate = useNavigate();
-  const { profile } = useAuth();
 
-  // Filter portals based on user role
-  const getAvailablePortals = () => {
-    const allPortals = [
-      {
-        title: "Student Portal",
-        description: "Submit and track your OD requests",
-        icon: GraduationCap,
-        path: "/student-dashboard",
-        role: "student"
-      },
-      {
-        title: "Faculty Portal", 
-        description: "Review and manage student requests",
-        icon: UserCheck,
-        path: "/faculty-dashboard",
-        role: "faculty"
-      },
-      {
-        title: "HOD Portal",
-        description: "Administrative oversight and approvals", 
-        icon: Users,
-        path: "/hod-dashboard",
-        role: "hod"
-      }
-    ];
-
-    if (!profile) return allPortals;
-    
-    // Show user's own portal plus admin portals if applicable
-    return allPortals.filter(portal => 
-      portal.role === profile.role || 
-      (profile.role === 'hod' && portal.role === 'faculty') ||
-      (profile.role === 'faculty' && portal.role === 'student')
-    );
-  };
+  const portals = [
+    {
+      title: "Student Portal",
+      description: "Submit and track your OD requests",
+      icon: GraduationCap,
+      path: "/student-dashboard",
+    },
+    {
+      title: "Faculty Portal", 
+      description: "Review and manage student requests",
+      icon: UserCheck,
+      path: "/faculty-dashboard",
+    },
+    {
+      title: "HOD Portal",
+      description: "Administrative oversight and approvals", 
+      icon: Users,
+      path: "/hod-dashboard",
+    }
+  ];
 
   return (
     <Layout title="Dashboard">
@@ -57,7 +40,7 @@ const Home = () => {
       </div>
 
       <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-        {getAvailablePortals().map((portal) => {
+        {portals.map((portal) => {
           const IconComponent = portal.icon;
           return (
             <Card key={portal.path} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(portal.path)}>
