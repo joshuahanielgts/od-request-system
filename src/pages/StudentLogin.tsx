@@ -41,6 +41,11 @@ const StudentLogin = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <img 
+            src="/lovable-uploads/d5e3db49-b66d-44ba-98ac-a8ff3dd35bf3.png" 
+            alt="SRM Institute of Science and Technology Logo" 
+            className="h-12 w-auto mx-auto mb-4"
+          />
           <div className="flex justify-center mb-4">
             <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
               <GraduationCap className="h-8 w-8 text-blue-600 dark:text-blue-400" />
@@ -48,7 +53,8 @@ const StudentLogin = () => {
           </div>
           <CardTitle className="text-2xl">Student Login</CardTitle>
           <CardDescription>
-            Sign in to access your student portal
+            Sign in to access your student portal<br/>
+            SRM Institute of Science & Technology
           </CardDescription>
         </CardHeader>
         <CardContent>

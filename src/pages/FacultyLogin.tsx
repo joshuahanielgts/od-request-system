@@ -41,6 +41,11 @@ const FacultyLogin = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <img 
+            src="/lovable-uploads/d5e3db49-b66d-44ba-98ac-a8ff3dd35bf3.png" 
+            alt="SRM Institute of Science and Technology Logo" 
+            className="h-12 w-auto mx-auto mb-4"
+          />
           <div className="flex justify-center mb-4">
             <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
               <Users className="h-8 w-8 text-green-600 dark:text-green-400" />
@@ -48,7 +53,8 @@ const FacultyLogin = () => {
           </div>
           <CardTitle className="text-2xl">Faculty Login</CardTitle>
           <CardDescription>
-            Sign in to access your faculty portal
+            Sign in to access your faculty portal<br/>
+            SRM Institute of Science & Technology
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -37,10 +37,18 @@ const LoginPortal = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="w-full max-w-4xl">
         <div className="text-center mb-8">
+          <img 
+            src="/lovable-uploads/d5e3db49-b66d-44ba-98ac-a8ff3dd35bf3.png" 
+            alt="SRM Institute of Science and Technology Logo" 
+            className="h-16 w-auto mx-auto mb-4"
+          />
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
             OD Management System
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
+          <p className="text-lg text-gray-600 dark:text-gray-400 mb-2">
+            SRM Institute of Science & Technology
+          </p>
+          <p className="text-md text-gray-500 dark:text-gray-500">
             Choose your portal to access the system
           </p>
         </div>

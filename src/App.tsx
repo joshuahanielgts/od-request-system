@@ -14,7 +14,6 @@ import StudentDashboard from "./pages/StudentDashboard";
 import HODDashboard from "./pages/HODDashboard";
 import FacultyDashboard from "./pages/FacultyDashboard";
 import NotFound from "./pages/NotFound";
-import "@/scripts/createUsers";
 
 const queryClient = new QueryClient();
 

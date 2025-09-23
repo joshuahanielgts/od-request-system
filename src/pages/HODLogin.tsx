@@ -41,6 +41,11 @@ const HODLogin = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-violet-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <img 
+            src="/lovable-uploads/d5e3db49-b66d-44ba-98ac-a8ff3dd35bf3.png" 
+            alt="SRM Institute of Science and Technology Logo" 
+            className="h-12 w-auto mx-auto mb-4"
+          />
           <div className="flex justify-center mb-4">
             <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
               <Crown className="h-8 w-8 text-purple-600 dark:text-purple-400" />
@@ -48,7 +53,8 @@ const HODLogin = () => {
           </div>
           <CardTitle className="text-2xl">HOD Login</CardTitle>
           <CardDescription>
-            Sign in to access the Head of Department portal
+            Sign in to access the Head of Department portal<br/>
+            SRM Institute of Science & Technology
           </CardDescription>
         </CardHeader>
         <CardContent>
