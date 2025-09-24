@@ -38,6 +38,7 @@ const StudentDashboard = () => {
   const [myRequests, setMyRequests] = useState<ODRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -58,6 +59,15 @@ const StudentDashboard = () => {
   const [proofFile, setProofFile] = useState<File | null>(null);
 
   useEffect(() => {
+    // Get the current user
+    const getCurrentUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUser(data.user);
+      }
+    };
+    
+    getCurrentUser();
     fetchMyRequests();
   }, []);
 
@@ -122,7 +132,7 @@ const StudentDashboard = () => {
       
       const proofDocUrl = await uploadFile(proofFile, 'proof');
 
-      // Submit the request
+      // Submit the request with user ID
       const { data, error } = await supabase
         .from('od_requests')
         .insert([{
@@ -131,7 +141,9 @@ const StudentDashboard = () => {
           to_period: parseInt(formData.to_period),
           supporting_document_url: supportingDocUrl,
           proof_document_url: proofDocUrl,
-          status: 'pending'
+          status: 'pending',
+          // Set the student_id to the current user's ID for RLS policies
+          student_id: user?.id || formData.student_id
         }]);
 
       if (error) throw error;
