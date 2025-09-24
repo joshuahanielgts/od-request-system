@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,8 +27,11 @@ interface ODRequest {
   class_in_charge: string;
   supporting_document_url?: string;
   proof_document_url: string;
-  status: "pending" | "class_approved" | "hod_approved" | "rejected";
+  status: "pending" | "approved" | "rejected";
   created_at: string;
+  updated_at: string;
+  owner_id?: string;
+  student_ids_array?: string[];
 }
 
 const StudentDashboard = () => {
@@ -38,7 +41,10 @@ const StudentDashboard = () => {
   const [myRequests, setMyRequests] = useState<ODRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{
+    id: string;
+    email?: string;
+  } | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -58,32 +64,51 @@ const StudentDashboard = () => {
   const [supportingFile, setSupportingFile] = useState<File | null>(null);
   const [proofFile, setProofFile] = useState<File | null>(null);
 
+  // Define fetchMyRequests with useCallback
+  const fetchMyRequests = useCallback(async () => {
+    try {
+      // Only fetch requests for the current authenticated user
+      let query = supabase
+        .from('od_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (user?.id) {
+        // If user is authenticated, filter by owner_id or student_id in the student_ids_array
+        query = query.or(`owner_id.eq.${user.id},student_ids_array.cs.{${formData.student_id}}`);
+      } else if (formData.student_id) {
+        // Fallback to using student_id in the student_ids_array
+        query = query.contains('student_ids_array', [formData.student_id]);
+      }
+      
+      const { data, error } = await query;
+
+      if (error) throw error;
+      setMyRequests((data || []) as ODRequest[]);
+    } catch (error) {
+      console.error('Error fetching requests:', error);
+    }
+  }, [user, formData.student_id]);
+
   useEffect(() => {
     // Get the current user
     const getCurrentUser = async () => {
       const { data } = await supabase.auth.getUser();
       if (data?.user) {
-        setUser(data.user);
+        setUser({
+          id: data.user.id,
+          email: data.user.email
+        });
       }
     };
     
     getCurrentUser();
-    fetchMyRequests();
   }, []);
-
-  const fetchMyRequests = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('od_requests')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setMyRequests((data || []) as any[]);
-    } catch (error) {
-      console.error('Error fetching requests:', error);
-    }
-  };
+  
+  // Fetch requests whenever user changes
+  useEffect(() => {
+    fetchMyRequests();
+  }, [fetchMyRequests]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -119,6 +144,37 @@ const StudentDashboard = () => {
       });
       return;
     }
+    
+    // Validate period range based on database constraints
+    const fromPeriod = parseInt(formData.from_period);
+    const toPeriod = parseInt(formData.to_period);
+    
+    if (isNaN(fromPeriod) || isNaN(toPeriod)) {
+      toast({
+        title: "Error",
+        description: "Please select valid periods",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (fromPeriod < 1 || fromPeriod > 7 || toPeriod < 1 || toPeriod > 7) {
+      toast({
+        title: "Error",
+        description: "Periods must be between 1 and 7",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (toPeriod < fromPeriod) {
+      toast({
+        title: "Error",
+        description: "To period must be greater than or equal to from period",
+        variant: "destructive"
+      });
+      return;
+    }
 
     setLoading(true);
     setUploading(true);
@@ -132,18 +188,29 @@ const StudentDashboard = () => {
       
       const proofDocUrl = await uploadFile(proofFile, 'proof');
 
+      // Create student IDs array with current student ID
+      const studentIdsArray = [formData.student_id];
+      
       // Submit the request with user ID
       const { data, error } = await supabase
         .from('od_requests')
         .insert([{
-          ...formData,
+          student_name: formData.student_name,
+          student_id: formData.student_id,
+          student_year: formData.student_year,
+          student_department: formData.student_department,
+          student_section: formData.student_section,
+          event_name: formData.event_name,
+          date: formData.date,
           from_period: parseInt(formData.from_period),
           to_period: parseInt(formData.to_period),
+          reason: formData.reason,
+          class_in_charge: formData.class_in_charge,
           supporting_document_url: supportingDocUrl,
           proof_document_url: proofDocUrl,
           status: 'pending',
-          // Set the student_id to the current user's ID for RLS policies
-          student_id: user?.id || formData.student_id
+          owner_id: user?.id || null, // Set owner_id to current authenticated user's ID
+          student_ids_array: studentIdsArray // Add the student ID to the array
         }]);
 
       if (error) throw error;
@@ -173,10 +240,11 @@ const StudentDashboard = () => {
       setShowForm(false);
       fetchMyRequests();
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to submit request";
       toast({
         title: "Error",
-        description: error.message || "Failed to submit request",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -189,10 +257,8 @@ const StudentDashboard = () => {
     switch (status) {
       case 'pending':
         return <Badge variant="warning">Pending</Badge>;
-      case 'class_approved':
-        return <Badge variant="secondary">Class In Charge Approved</Badge>;
-      case 'hod_approved':
-        return <Badge variant="default">HOD Approved</Badge>;
+      case 'approved':
+        return <Badge variant="default">Approved</Badge>;
       case 'rejected':
         return <Badge variant="destructive">Rejected</Badge>;
       default:
@@ -341,13 +407,13 @@ const StudentDashboard = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="from_period">From Period *</Label>
+                      <Label htmlFor="from_period">From Period * (1-7)</Label>
                       <Select value={formData.from_period} onValueChange={(value) => handleInputChange('from_period', value)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select Period" />
                         </SelectTrigger>
                         <SelectContent>
-                          {[1, 2, 3, 4, 5, 6, 7, 8].map((period) => (
+                          {[1, 2, 3, 4, 5, 6, 7].map((period) => (
                             <SelectItem key={period} value={period.toString()}>
                               Period {period}
                             </SelectItem>
@@ -356,13 +422,13 @@ const StudentDashboard = () => {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="to_period">To Period *</Label>
+                      <Label htmlFor="to_period">To Period * (1-7)</Label>
                       <Select value={formData.to_period} onValueChange={(value) => handleInputChange('to_period', value)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select Period" />
                         </SelectTrigger>
                         <SelectContent>
-                          {[1, 2, 3, 4, 5, 6, 7, 8].map((period) => (
+                          {[1, 2, 3, 4, 5, 6, 7].map((period) => (
                             <SelectItem key={period} value={period.toString()}>
                               Period {period}
                             </SelectItem>
