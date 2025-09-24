@@ -9,6 +9,8 @@ import { Calendar, Clock, User, CheckCircle, XCircle, FileText } from "lucide-re
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout";
+import { useNavigate } from "react-router-dom";
+import { Home } from "lucide-react";
 
 interface ODRequest {
   id: string;
@@ -30,6 +32,7 @@ interface ODRequest {
 }
 
 const HODDashboard = () => {
+  const navigate = useNavigate();
   const [requests, setRequests] = useState<ODRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<ODRequest | null>(null);
@@ -132,6 +135,14 @@ const HODDashboard = () => {
             <p className="text-muted-foreground">Welcome to the HOD Portal!</p>
           </div>
           <div className="flex items-center gap-4">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2"
+            >
+              <Home className="w-4 h-4" />
+              Home
+            </Button>
             <div className="space-y-2">
               <Label htmlFor="date">Filter by Date</Label>
               <Input

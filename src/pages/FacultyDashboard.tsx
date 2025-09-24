@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Users, Clock, BookOpen, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout";
+import { useNavigate } from "react-router-dom";
+import { Home } from "lucide-react";
 
 interface ODRequest {
   id: string;
@@ -34,6 +36,7 @@ interface ClassData {
 }
 
 const FacultyDashboard = () => {
+  const navigate = useNavigate();
   const [selectedClass, setSelectedClass] = useState<string>("");
   const [approvedRequests, setApprovedRequests] = useState<ODRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -102,7 +105,17 @@ const FacultyDashboard = () => {
 
   return (
     <Layout title="Faculty Dashboard">
-      <div className="mb-6 text-muted-foreground">Welcome to the Faculty Portal!</div>
+      <div className="flex items-center justify-between mb-6">
+        <div className="text-muted-foreground">Welcome to the Faculty Portal!</div>
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2"
+        >
+          <Home className="w-4 h-4" />
+          Home
+        </Button>
+      </div>
       <div className="space-y-6">
         {/* Date Filter */}
         <Card>
