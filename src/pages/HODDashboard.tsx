@@ -26,7 +26,7 @@ interface ODRequest {
   reason: string;
   supporting_document_url?: string;
   proof_document_url: string;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "class_approved" | "hod_approved" | "rejected";
   created_at: string;
   updated_at: string;
 }
@@ -54,8 +54,8 @@ const HODDashboard = () => {
       if (date) {
         query = query.eq('date', date);
       } else {
-        // Show only pending requests if no date selected
-        query = query.eq('status', 'pending');
+        // Show only class_approved requests for HOD if no date selected
+        query = query.eq('status', 'class_approved');
       }
 
       const { data, error } = await query;
@@ -73,7 +73,7 @@ const HODDashboard = () => {
     }
   };
 
-  const handleRequestAction = async (requestId: string, action: "approved" | "rejected") => {
+  const handleRequestAction = async (requestId: string, action: "hod_approved" | "rejected") => {
     try {
       setLoading(true);
       const { error } = await supabase
@@ -84,10 +84,14 @@ const HODDashboard = () => {
       if (error) throw error;
 
       const request = requests.find(r => r.id === requestId);
+      const message = action === "hod_approved" 
+        ? "OD request approved by HOD" 
+        : "OD request rejected by HOD";
+
       toast({
-        title: `Request ${action}`,
-        description: `${request?.student_name}'s OD request has been ${action}`,
-        variant: action === "approved" ? "default" : "destructive"
+        title: `Request ${action === "hod_approved" ? "Approved" : "Rejected"}`,
+        description: `${request?.student_name}'s request: ${message}`,
+        variant: action === "hod_approved" ? "default" : "destructive"
       });
 
       setDialogOpen(false);
@@ -115,7 +119,7 @@ const HODDashboard = () => {
     fetchRequests(date);
   };
 
-  const filteredRequests = selectedDate ? requests : requests.filter(r => r.status === "pending");
+  const filteredRequests = selectedDate ? requests : requests.filter(r => r.status === "class_approved");
 
   const getPeriodText = (from: number, to: number) => {
     if (from === to) {
@@ -130,7 +134,7 @@ const HODDashboard = () => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold text-foreground">
-              {selectedDate ? `Requests for ${new Date(selectedDate).toLocaleDateString()}` : `Pending Approvals`} ({filteredRequests.length})
+              {selectedDate ? `Requests for ${new Date(selectedDate).toLocaleDateString()}` : `Class Approved Requests`} ({filteredRequests.length})
             </h2>
             <p className="text-muted-foreground">Welcome to the HOD Portal!</p>
           </div>
@@ -162,7 +166,7 @@ const HODDashboard = () => {
                 <div className="text-muted-foreground">
                   <CheckCircle className="w-12 h-12 mx-auto mb-4 text-success" />
                   <h3 className="text-lg font-medium mb-2">All caught up!</h3>
-                  <p>No pending OD requests at the moment.</p>
+                  <p>No requests pending for your approval at the moment.</p>
                 </div>
               </CardContent>
             </Card>
@@ -186,10 +190,11 @@ const HODDashboard = () => {
                         </CardDescription>
                       </div>
                       <Badge variant={
-                        request.status === 'pending' ? 'warning' : 
-                        request.status === 'approved' ? 'default' : 'destructive'
+                        request.status === 'class_approved' ? 'secondary' : 
+                        request.status === 'hod_approved' ? 'default' : 'destructive'
                       }>
-                        {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                        {request.status === 'class_approved' ? 'Approved by Class In Charge' : 
+                         request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -323,10 +328,10 @@ const HODDashboard = () => {
                 </div>
 
                 <div className="flex gap-3 pt-4">
-                  {selectedRequest.status === 'pending' && (
+                  {selectedRequest.status === 'class_approved' && (
                     <>
                       <Button
-                        onClick={() => handleRequestAction(selectedRequest.id, "approved")}
+                        onClick={() => handleRequestAction(selectedRequest.id, "hod_approved")}
                         className="flex-1 bg-success hover:bg-success/90 text-success-foreground"
                         disabled={loading}
                       >
@@ -344,10 +349,10 @@ const HODDashboard = () => {
                       </Button>
                     </>
                   )}
-                  {selectedRequest.status !== 'pending' && (
+                  {selectedRequest.status !== 'class_approved' && (
                     <div className="flex-1 text-center p-4 bg-muted rounded-lg">
-                      <Badge variant={selectedRequest.status === 'approved' ? 'default' : 'destructive'} className="text-sm">
-                        Request {selectedRequest.status.charAt(0).toUpperCase() + selectedRequest.status.slice(1)}
+                      <Badge variant={selectedRequest.status === 'hod_approved' ? 'default' : 'destructive'} className="text-sm">
+                        Request {selectedRequest.status === 'hod_approved' ? 'Approved by HOD' : selectedRequest.status.charAt(0).toUpperCase() + selectedRequest.status.slice(1)}
                       </Badge>
                     </div>
                   )}

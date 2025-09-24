@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       od_requests: {
         Row: {
+          class_in_charge: string
           created_at: string
           date: string
           event_name: string
@@ -36,6 +37,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          class_in_charge?: string
           created_at?: string
           date: string
           event_name: string
@@ -56,6 +58,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          class_in_charge?: string
           created_at?: string
           date?: string
           event_name?: string

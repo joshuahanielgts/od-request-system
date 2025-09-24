@@ -51,7 +51,7 @@ const FacultyDashboard = () => {
       let query = supabase
         .from('od_requests')
         .select('*')
-        .eq('status', 'approved')
+        .eq('status', 'hod_approved') // Faculty only sees HOD approved requests
         .order('created_at', { ascending: false });
 
       if (date) {
